@@ -2,14 +2,13 @@
   config,
   lib,
   pkgs,
-  self,
   ...
 }:
 let
   cfg = config.services.immich;
-  isUnixSocket = lib.hasPrefix "/" cfg.database.host;
+  isPostgresUnixSocket = lib.hasPrefix "/" cfg.database.host;
   postgresEnv =
-    if isUnixSocket then
+    if isPostgresUnixSocket then
       { DB_URL = "socket://${cfg.database.host}?dbname=${cfg.database.name}"; }
     else
       {
@@ -17,6 +16,15 @@ let
         DB_PORT = toString cfg.database.port;
         DB_DATABASE_NAME = cfg.database.name;
         DB_USERNAME = cfg.database.user;
+      };
+  isRedisUnixSocket = lib.hasPrefix "/" cfg.redis.host;
+  redisEnv =
+    if isRedisUnixSocket then
+      { REDIS_SOCKET = cfg.redis.host; }
+    else
+      {
+        REDIS_PORT = toString cfg.redis.port;
+        REDIS_HOSTNAME = cfg.redis.host;
       };
 
   commonServiceConfig = {
@@ -75,7 +83,14 @@ in
       '';
     };
     secretsFile = mkOption {
-      type = types.nullOr types.path;
+      type = types.nullOr (
+        types.str
+        // {
+          # We don't want users to be able to pass a path literal here but
+          # it should look like a path.
+          check = it: lib.isString it && lib.types.path.check it;
+        }
+      );
       default = null;
       example = "/run/secrets/immich";
       description = ''
@@ -114,9 +129,11 @@ in
     };
 
     machine-learning = {
-      enable = mkEnableOption "immich-machine-learning" // {
-        default = true;
-      };
+      enable =
+        mkEnableOption "immich's machine-learning functionality to detect faces and search for objects"
+        // {
+          default = true;
+        };
       environment = mkOption {
         type = types.submodule { freeformType = types.attrsOf types.str; };
         default = { };
@@ -130,13 +147,13 @@ in
     };
 
     database = {
-      enable = mkEnableOption "postgresql" // {
+      enable =
+        mkEnableOption "the postgresql database for use with immich. See {option}`services.postgresql`"
+        // {
+          default = true;
+        };
+      createDB = mkEnableOption "the automatic creation of the database for immich." // {
         default = true;
-      };
-      createDB = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Whether to create the database for immich automatically.";
       };
       name = mkOption {
         type = types.str;
@@ -161,23 +178,18 @@ in
       };
     };
     redis = {
-      enable = mkEnableOption "immich redis server" // {
+      enable = mkEnableOption "a redis cache for use with immich" // {
         default = true;
       };
       host = mkOption {
         type = types.str;
-        default = "localhost";
+        default = "/run/immich/redis.sock";
         description = "The host that redis will listen on.";
-      };
-      serverName = mkOption {
-        type = types.str;
-        default = "immich";
-        description = "The server name of the immich redis instance.";
       };
       port = mkOption {
         type = types.port;
-        default = 6379;
-        description = "The port that redis will listen on.";
+        default = 0;
+        description = "The port that redis will listen on. Set to zero to disable TCP.";
       };
     };
   };
@@ -185,7 +197,7 @@ in
   config = mkIf cfg.enable {
     assertions = [
       {
-        assertion = !isUnixSocket -> cfg.secretsFile != null;
+        assertion = !isPostgresUnixSocket -> cfg.secretsFile != null;
         message = "A secrets file containing at least the database password must be provided when unix sockets are not used.";
       }
     ];
@@ -219,14 +231,17 @@ in
       in
       mkIf cfg.database.setupPgvectors [
         ''
-          ${config.services.postgresql.package}/bin/psql -d "${cfg.user}" -f "${sqlFile}"
+          ${lib.getExe' config.services.postgresql.package "psql"} -d "${cfg.database.name}" -f "${sqlFile}"
         ''
       ];
 
     services.redis.servers = mkIf cfg.redis.enable {
-      "${cfg.redis.serverName}" = {
+      immich = {
         enable = true;
+        user = cfg.user;
         port = cfg.redis.port;
+        bind = mkIf (!isRedisUnixSocket) cfg.redis.host;
+        unixSocket = mkIf isRedisUnixSocket cfg.redis.host;
       };
     };
 
@@ -236,22 +251,22 @@ in
       description = "Immich backend server (Self-hosted photo and video backup solution)";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
-      environment = lib.mkMerge [
+      environment =
         postgresEnv
-        {
-          REDIS_HOSTNAME = cfg.redis.host;
+        // redisEnv
+        // {
           HOST = cfg.host;
           IMMICH_PORT = toString cfg.port;
           IMMICH_MEDIA_LOCATION = cfg.mediaLocation;
           IMMICH_MACHINE_LEARNING_URL = "http://localhost:3003";
         }
-        cfg.environment
-      ];
+        // cfg.environment;
 
       serviceConfig = commonServiceConfig // {
         ExecStart = lib.getExe cfg.package;
         EnvironmentFile = mkIf (cfg.secretsFile != null) cfg.secretsFile;
         StateDirectory = "immich";
+        RuntimeDirectory = "immich";
         User = cfg.user;
         Group = cfg.group;
       };
@@ -261,6 +276,7 @@ in
       description = "immich machine learning";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
+      inherit (cfg.machine-learning) environment;
       serviceConfig = commonServiceConfig // {
         ExecStart = lib.getExe cfg.package.machine-learning;
         CacheDirectory = "immich";

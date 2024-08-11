@@ -1,10 +1,10 @@
 import ../make-test-python.nix (
-  { pkgs, ... }:
+  { ... }:
   {
     name = "immich-nixos";
 
     nodes.machine =
-      { self, pkgs, ... }:
+      { pkgs, ... }:
       {
         # These tests need a little more juice
         virtualisation = {

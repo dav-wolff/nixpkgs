@@ -1,21 +1,23 @@
 {
   lib,
-  pkgs,
+  stdenvNoCC,
   buildNpmPackage,
   fetchFromGitHub,
   python3,
   nodejs,
+  nodePackages,
   runCommand,
   nixosTests,
+  callPackage,
   # build-time deps
+  glib,
   pkg-config,
   makeWrapper,
-  cmake,
   curl,
   cacert,
   unzip,
   # runtime deps
-  ffmpeg-full, # immich requires at least webp encoder from ffmpeg-full
+  ffmpeg-headless,
   imagemagick,
   libraw,
   libheif,
@@ -26,14 +28,6 @@ let
   buildNpmPackage' = buildNpmPackage.override { inherit nodejs; };
   sources = lib.importJSON ./sources.json;
   inherit (sources) version;
-
-  meta = with lib; {
-    description = "Self-hosted photo and video backup solution";
-    homepage = "https://immich.app/";
-    license = licenses.agpl3Only;
-    maintainers = with maintainers; [ jvanbruegge ];
-    inherit (nodejs.meta) platforms;
-  };
 
   buildLock = {
     sources =
@@ -58,20 +52,24 @@ let
       {
         outputHash = "sha256-imqSfzXaEMNo9T9tZr80sr/89n19kiFc8qwidFzRUaY=";
         outputHashMode = "recursive";
-        nativeBuildInputs = [ cacert ];
+        nativeBuildInputs = [
+          cacert
+          curl
+          unzip
+        ];
 
         meta.license = lib.licenses.cc-by-40;
       }
       ''
         mkdir $out
         url="https://web.archive.org/web/20240724153050/http://download.geonames.org/export/dump"
-        ${lib.getExe curl} -Lo ./cities500.zip "$url/cities500.zip"
-        ${lib.getExe curl} -Lo $out/admin1CodesASCII.txt "$url/admin1CodesASCII.txt"
-        ${lib.getExe curl} -Lo $out/admin2Codes.txt "$url/admin2Codes.txt"
-        ${lib.getExe curl} -Lo $out/ne_10m_admin_0_countries.geojson \
-          https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_10m_admin_0_countries.geojson
+        curl -Lo ./cities500.zip "$url/cities500.zip"
+        curl -Lo $out/admin1CodesASCII.txt "$url/admin1CodesASCII.txt"
+        curl -Lo $out/admin2Codes.txt "$url/admin2Codes.txt"
+        curl -Lo $out/ne_10m_admin_0_countries.geojson \
+          https://raw.githubusercontent.com/nvkelso/natural-earth-vector/ca96624a56bd078437bca8184e78163e5039ad19/geojson/ne_10m_admin_0_countries.geojson
 
-        ${lib.getExe unzip} ./cities500.zip -d $out/
+        unzip ./cities500.zip -d $out/
         echo "2024-07-24T15:30:50Z" > $out/geodata-date.txt
       '';
 
@@ -101,13 +99,11 @@ let
     '';
   };
 
-  cli = buildNpmPackage' {
-    pname = "immich-cli";
+  web = buildNpmPackage' {
+    pname = "immich-web";
     inherit version;
-    src = "${src}/cli";
-    inherit (sources.components.cli) npmDepsHash;
-
-    nativeBuildInputs = [ makeWrapper ];
+    src = "${src}/web";
+    inherit (sources.components.web) npmDepsHash;
 
     preBuild = ''
       rm node_modules/@immich/sdk
@@ -119,127 +115,30 @@ let
     installPhase = ''
       runHook preInstall
 
-      mkdir -p $out
-      mv package.json package-lock.json node_modules dist $out/
-
-      ls $out/dist
-
-      makeWrapper ${lib.getExe nodejs} $out/bin/immich --add-flags $out/dist/index.js
-
-      runHook postInstall
-    '';
-
-    meta = {
-      inherit (meta)
-        description
-        homepage
-        license
-        maintainers
-        platforms
-        ;
-      mainProgram = "immich";
-    };
-  };
-
-  web = buildNpmPackage' {
-    pname = "immich-web";
-    inherit version;
-    src = "${src}/web";
-    inherit (sources.components.web) npmDepsHash;
-
-    inherit (cli) preBuild;
-
-    installPhase = ''
-      runHook preInstall
-
       cp -r build $out
 
       runHook postInstall
     '';
   };
 
-  machine-learning = python3.pkgs.buildPythonApplication {
-    pname = "immich-machine-learning";
-    inherit version;
-    src = "${src}/machine-learning";
-    pyproject = true;
-
-    postPatch = ''
-      substituteInPlace pyproject.toml --replace-fail 'fastapi-slim' 'fastapi'
-
-      # Allow immich to use pydantic v2
-      substituteInPlace app/schemas.py --replace-fail 'pydantic' 'pydantic.v1'
-      substituteInPlace app/main.py --replace-fail 'pydantic' 'pydantic.v1'
-      substituteInPlace app/config.py \
-        --replace-fail 'pydantic' 'pydantic.v1' \
-        --replace-fail '/cache' '/var/cache/immich'
-    '';
-
-    pythonRelaxDeps = [
-      "setuptools"
-      "pydantic"
-    ];
-    pythonRemoveDeps = [ "opencv-python-headless" ];
-
-    nativeBuildInputs = with python3.pkgs; [
-      pythonRelaxDepsHook
-      poetry-core
-      cython
-    ];
-
-    dependencies =
-      with python3.pkgs;
-      [
-        insightface
-        opencv4
-        pillow
-        fastapi
-        uvicorn
-        aiocache
-        rich
-        ftfy
-        setuptools
-        python-multipart
-        orjson
-        gunicorn
-        huggingface-hub
-        tokenizers
-        pydantic
-      ]
-      ++ python3.pkgs.uvicorn.optional-dependencies.standard;
-
-    doCheck = false;
-
-    postInstall = ''
-      mkdir -p $out/share
-      cp log_conf.json $out/share
-
-      cp -r ann $out/${python3.sitePackages}/
-
-      makeWrapper ${python3.pkgs.gunicorn}/bin/gunicorn $out/bin/machine-learning \
-        --prefix PYTHONPATH : "$out/${python3.sitePackages}:$PYTHONPATH" \
-        --set-default MACHINE_LEARNING_WORKERS 1 \
-        --set-default MACHINE_LEARNING_WORKER_TIMEOUT 120 \
-        --set-default IMMICH_HOST 127.0.0.1 \
-        --set-default IMMICH_PORT 3003 \
-        --add-flags "app.main:app -k app.config.CustomUvicornWorker \
-          -w \"\$MACHINE_LEARNING_WORKERS\" \
-          -b \"\$IMMICH_HOST:\$IMMICH_PORT\" \
-          -t \"\$MACHINE_LEARNING_WORKER_TIMEOUT\"
-          --log-config-json $out/share/log_conf.json"
-    '';
-
-    meta = {
-      inherit (meta)
-        description
-        homepage
-        license
-        maintainers
-        platforms
-        ;
-      mainProgram = "machine-learning";
+  node-addon-api = stdenvNoCC.mkDerivation rec {
+    pname = "node-addon-api";
+    version = "8.0.0";
+    src = fetchFromGitHub {
+      owner = "nodejs";
+      repo = "node-addon-api";
+      rev = "v${version}";
+      hash = "sha256-k3v8lK7uaEJvcaj1sucTjFZ6+i5A6w/0Uj9rYlPhjCE=";
     };
+    installPhase = ''
+      mkdir $out
+      cp -r *.c *.h *.gyp *.gypi index.js package-support.json package.json tools $out/
+    '';
   };
+
+  vips' = vips.overrideAttrs (prev: {
+    mesonFlags = prev.mesonFlags ++ [ "-Dtiff=disabled" ];
+  });
 in
 buildNpmPackage' {
   pname = "immich";
@@ -251,18 +150,34 @@ buildNpmPackage' {
     pkg-config
     python3
     makeWrapper
+    glib.dev
+    nodePackages.node-gyp
   ];
 
   buildInputs = [
-    ffmpeg-full
+    ffmpeg-headless
     imagemagick
     libraw
     libheif
-    vips # Required for sharp
+    vips' # Required for sharp
   ];
 
   # Required because vips tries to write to the cache dir
   makeCacheWritable = true;
+
+  preBuild = ''
+    cd node_modules/sharp
+
+    mkdir node_modules
+    ln -s ${node-addon-api} node_modules/node-addon-api
+
+    ${lib.getExe nodejs} install/check
+
+    rm -r node_modules
+
+    cd ../..
+    rm -r node_modules/@img/sharp*
+  '';
 
   installPhase = ''
     runHook preInstall
@@ -283,7 +198,7 @@ buildNpmPackage' {
       --suffix PATH : "${
         lib.makeBinPath [
           perl
-          ffmpeg-full
+          ffmpeg-headless
         ]
       }"
 
@@ -294,23 +209,23 @@ buildNpmPackage' {
     tests = {
       inherit (nixosTests) immich;
     };
-    inherit
-      cli
-      web
-      machine-learning
-      geodata
-      ;
+
+    cli = callPackage ./cli.nix {
+      buildNpmPackage = buildNpmPackage';
+      inherit src;
+    };
+    machine-learning = callPackage ./machine-learning.nix { inherit src; };
+
+    inherit web geodata;
     updateScript = ./update.sh;
   };
 
   meta = {
-    inherit (meta)
-      description
-      homepage
-      license
-      maintainers
-      platforms
-      ;
+    description = "Self-hosted photo and video backup solution";
+    homepage = "https://immich.app/";
+    license = lib.licenses.agpl3Only;
+    maintainers = with lib.maintainers; [ jvanbruegge ];
+    platforms = lib.platforms.linux;
     mainProgram = "server";
   };
 }
