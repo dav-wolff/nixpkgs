@@ -23,11 +23,32 @@
   libheif,
   vips,
   perl,
+  sources ? null,
 }:
 let
   buildNpmPackage' = buildNpmPackage.override { inherit nodejs; };
-  sources = lib.importJSON ./sources.json;
-  inherit (sources) version;
+
+  sources' = if sources != null then
+    sources
+  else let
+    json = lib.importJSON ./sources.json;
+  in {
+    inherit (json) version;
+    src = fetchFromGitHub {
+      owner = "immich-app";
+      repo = "immich";
+      rev = "v${version}";
+      inherit (json) hash;
+    };
+    npmDepsHashes = {
+      server = json.components.server.npmDepsHash;
+      web = json.components.web.npmDepsHash;
+      openapi = json.components."open-api/typescript-sdk".npmDepsHash;
+      cli = json.components.cli.npmDepsHash;
+    };
+  };
+
+  inherit (sources') version src;
 
   buildLock = {
     sources =
@@ -73,18 +94,11 @@ let
         echo "2024-07-24T15:30:50Z" > $out/geodata-date.txt
       '';
 
-  src = fetchFromGitHub {
-    owner = "immich-app";
-    repo = "immich";
-    rev = "v${version}";
-    inherit (sources) hash;
-  };
-
   openapi = buildNpmPackage' {
     pname = "immich-openapi-sdk";
     inherit version;
     src = "${src}/open-api/typescript-sdk";
-    inherit (sources.components."open-api/typescript-sdk") npmDepsHash;
+    npmDepsHash = sources'.npmDepsHashes.openapi;
 
     installPhase = ''
       runHook preInstall
@@ -103,7 +117,7 @@ let
     pname = "immich-web";
     inherit version;
     src = "${src}/web";
-    inherit (sources.components.web) npmDepsHash;
+    npmDepsHash = sources'.npmDepsHashes.web;
 
     preBuild = ''
       rm node_modules/@immich/sdk
@@ -144,7 +158,7 @@ buildNpmPackage' {
   pname = "immich";
   inherit version;
   src = "${src}/server";
-  inherit (sources.components.server) npmDepsHash;
+  npmDepsHash = sources'.npmDepsHashes.server;
 
   nativeBuildInputs = [
     pkg-config
@@ -212,7 +226,7 @@ buildNpmPackage' {
 
     cli = callPackage ./cli.nix {
       buildNpmPackage = buildNpmPackage';
-      inherit src;
+      sources = sources';
     };
     machine-learning = callPackage ./machine-learning.nix { inherit src; };
 

@@ -1,19 +1,16 @@
 {
   lib,
-  src,
+  sources,
   immich,
   buildNpmPackage,
   nodejs,
   makeWrapper,
 }:
-let
-  sources = lib.importJSON ./sources.json;
-in
 buildNpmPackage {
   pname = "immich-cli";
   inherit (sources) version;
-  src = "${src}/cli";
-  inherit (sources.components.cli) npmDepsHash;
+  src = "${sources.src}/cli";
+  npmDepsHash = sources.npmDepsHashes.cli;
 
   nativeBuildInputs = [ makeWrapper ];
 
