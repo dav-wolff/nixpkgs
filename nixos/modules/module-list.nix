@@ -1076,6 +1076,7 @@
   ./services/network-filesystems/yandex-disk.nix
   ./services/networking/3proxy.nix
   ./services/networking/acme-dns.nix
+  ./services/networking/acmed.nix
   ./services/networking/adguardhome.nix
   ./services/networking/alice-lg.nix
   ./services/networking/amuled.nix
