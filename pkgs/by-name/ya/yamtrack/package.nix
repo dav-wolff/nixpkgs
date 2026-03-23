@@ -91,6 +91,7 @@ stdenv.mkDerivation (finalAttrs: {
     cat > $out/bin/yamtrack <<EOF
     #!${runtimeShell}
     cd $out/lib/yamtrack
+    export VERSION=\''${VERSION:-v${finalAttrs.version} (nixpkgs)}
     ${python.interpreter} manage.py migrate --noinput
     ${python}/bin/celery --app config worker --without-mingle --without-gossip &
     ${python}/bin/celery --app config beat &

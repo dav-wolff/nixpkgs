@@ -16,7 +16,7 @@
 
     @polling_condition
     def yamtrack_running():
-      machine.succeed("systemctl status yamtrack")
+      machine.fail("systemctl is-failed yamtrack")
 
     with yamtrack_running: # type: ignore[union-attr]
       machine.wait_for_open_port(8002) # yamtrack
