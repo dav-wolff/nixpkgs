@@ -10,7 +10,7 @@
   requests-cache,
 }:
 
-buildPythonPackage rec {
+buildPythonPackage (finalAttrs: {
   pname = "requests-ratelimiter";
   version = "0.8.0";
   pyproject = true;
@@ -18,7 +18,7 @@ buildPythonPackage rec {
   src = fetchFromGitHub {
     owner = "JWCook";
     repo = "requests-ratelimiter";
-    tag = "v${version}";
+    tag = "v${finalAttrs.version}";
     hash = "sha256-/fyZ+fjboAw97FPI6TgcjHRUAJbdNomvh7xJqTrTmuY=";
   };
 
@@ -40,8 +40,8 @@ buildPythonPackage rec {
   meta = {
     description = "Module for rate-limiting for requests";
     homepage = "https://github.com/JWCook/requests-ratelimiter";
-    changelog = "https://github.com/JWCook/requests-ratelimiter/blob/${src.tag}/HISTORY.md";
+    changelog = "https://github.com/JWCook/requests-ratelimiter/blob/${finalAttrs.src.tag}/HISTORY.md";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ dav-wolff ];
   };
-}
+})

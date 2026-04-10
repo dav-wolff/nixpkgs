@@ -12,7 +12,7 @@
   };
 
   testScript = ''
-    machine.wait_for_unit('yamtrack.service')
+    machine.wait_for_unit('yamtrack.target')
 
     @polling_condition
     def yamtrack_running():
