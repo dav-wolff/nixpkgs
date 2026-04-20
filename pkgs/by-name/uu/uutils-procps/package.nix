@@ -10,16 +10,16 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "uutils-procps";
-  version = "0.0.1-unstable-2026-03-13";
+  version = "0.0.1-unstable-2026-04-10";
 
   src = fetchFromGitHub {
     owner = "uutils";
     repo = "procps";
-    rev = "e74801e5d9769bc07b66825d1bcc78b526aa7e61";
-    hash = "sha256-8LbGiE0l/oVDfWkPZJvAcIUmoEwIQgjoMLQn2pygrRA=";
+    rev = "a6321bdbcb3c1810581cba24a2e7329c7781dd87";
+    hash = "sha256-QYeb7Kw2UzJTpKFv+5vnUjq+QpSkQa2Ch6AITXh1qXs=";
   };
 
-  cargoHash = "sha256-e49VmVtE/9weQcac8nxGRnpQ0ii44nfDZAug+IscTx8=";
+  cargoHash = "sha256-tYeUQxFkTQdQ9aOeEi77FoQIpxY1OiLZIMZTK/dxf7o=";
 
   cargoBuildFlags = [ "--workspace" ];
 
@@ -47,6 +47,8 @@ rustPlatform.buildRustPackage (finalAttrs: {
     "--skip=test_ps::test_real_user_selection"
     "--skip=test_pkill::test_inverse"
     "--skip=test_pgrep::test_pidfile"
+    # pgrep: pattern that searches for process name longer than 15 characters will result in zero matches
+    "--skip=test_pgrep::test_pool_workqueue_release"
   ];
 
   passthru.updateScript = nix-update-script {

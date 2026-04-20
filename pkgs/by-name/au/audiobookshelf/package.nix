@@ -15,10 +15,10 @@
 
 let
   source = {
-    version = "2.33.0";
-    hash = "sha256-jHwSJm1VB0W3/sIas39wgvcn+K62DyKJqMdO0kbSgeY=";
-    npmDepsHash = "sha256-PvtnkQytGkKS2MYwpwAGd5F2CrsVKJ2lLbS46ta5a5c=";
-    clientNpmDepsHash = "sha256-+ivzzGLWPCnXWJt6Z6jzXkzMjzXWUK4iRfmF+gUSKEo=";
+    version = "2.33.2";
+    hash = "sha256-YsKUoJ0SlBO3fAbMvzaEEIgo90HclB+0iLVIH4LDmEY=";
+    npmDepsHash = "sha256-h/5brNurUEMHTSu2PGODhRtIenGzhsNM558i85Cs86w=";
+    clientNpmDepsHash = "sha256-EbXkHRjOE1A7Sk4MhbJFuBwG/VY+SHhHYjscsXkSMjU=";
   };
 
   src = fetchFromGitHub {

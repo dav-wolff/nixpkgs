@@ -4,6 +4,7 @@
   autoPatchelfHook,
   fetchurl,
   makeBinaryWrapper,
+  bash,
   versionCheckHook,
 }:
 
@@ -32,13 +33,16 @@ stdenv.mkDerivation (finalAttrs: {
 
   installPhase = ''
     runHook preInstall
-    install -Dm755 copilot $out/bin/copilot
+    # Use libexec to preserve filename when calling makeBinaryWrapper
+    install -Dm755 copilot $out/libexec/copilot
     runHook postInstall
   '';
 
   postInstall = ''
-    wrapProgram $out/bin/copilot \
-      --add-flags "--no-auto-update"
+    # Filename must explictly be "copilot" for internal self-referencing
+    makeWrapper $out/libexec/copilot $out/bin/copilot \
+      --add-flags "--no-auto-update" \
+      --prefix PATH : "${lib.makeBinPath [ bash ]}"
   '';
 
   nativeInstallCheckInputs = [ versionCheckHook ];

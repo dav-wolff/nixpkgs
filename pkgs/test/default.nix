@@ -172,6 +172,8 @@ in
 
   go = recurseIntoAttrs (callPackage ../build-support/go/tests.nix { });
 
+  lake = callPackage ../build-support/lake/test { };
+
   pkg-config = recurseIntoAttrs (callPackage ../top-level/pkg-config/tests.nix { });
 
   buildRustCrate = recurseIntoAttrs (callPackage ../build-support/rust/build-rust-crate/test { });
@@ -264,5 +266,5 @@ in
     callPackages ../build-support/prefer-remote-fetch/tests.nix { }
   );
 
-  home-assistant-component-tests = recurseIntoAttrs pkgs.home-assistant.tests.components;
+  home-assistant-components = recurseIntoAttrs pkgs.home-assistant.tests.components;
 }

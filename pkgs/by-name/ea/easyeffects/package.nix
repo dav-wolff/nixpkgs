@@ -11,7 +11,7 @@
   gsl,
   intltool,
   kdePackages,
-  ladspaH,
+  ladspa-header,
   libbs2b,
   libebur128,
   libmysofa,
@@ -59,13 +59,13 @@ in
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "easyeffects";
-  version = "8.1.2";
+  version = "8.2.0";
 
   src = fetchFromGitHub {
     owner = "wwmm";
     repo = "easyeffects";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-Tz14pjI5pNJOQH0KFaf9mJkFdup1GVxlkMnzVQusx/M=";
+    hash = "sha256-HBCYXFFDOhwVebwPIduYNGJ61LFw9lOTZyYmt1k6CuA=";
   };
 
   nativeBuildInputs = [
@@ -93,7 +93,7 @@ stdenv.mkDerivation (finalAttrs: {
     kiconthemes
     kirigami
     kirigami-addons
-    ladspaH
+    ladspa-header
     qqc2-desktop-style
     libbs2b
     libebur128

@@ -15,13 +15,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "libphonenumber";
-  version = "9.0.26";
+  version = "9.0.28";
 
   src = fetchFromGitHub {
     owner = "google";
     repo = "libphonenumber";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-ETfYnb9E8uAJMz1m6hOFitEbmM/2UCtD6wgPZEkO6gQ=";
+    hash = "sha256-Mi+FpM8viPUWgzT8tp3zc9e5fsI9xhlsdsYYlaVRTNk=";
   };
 
   patches = [
@@ -66,15 +66,17 @@ stdenv.mkDerivation (finalAttrs: {
 
   checkTarget = "tests";
 
-  cmakeFlags =
-    lib.optionals (!enableTests) [
-      (lib.cmakeBool "REGENERATE_METADATA" false)
-      (lib.cmakeBool "USE_BOOST" false)
-    ]
-    ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
-      (lib.cmakeFeature "CMAKE_CROSSCOMPILING_EMULATOR" (stdenv.hostPlatform.emulator buildPackages))
-      (lib.cmakeFeature "PROTOC_BIN" (lib.getExe buildPackages.protobuf))
-    ];
+  cmakeFlags = [
+    (lib.cmakeFeature "CMAKE_CXX_FLAGS" "-Wno-error=deprecated-declarations")
+  ]
+  ++ lib.optionals (!enableTests) [
+    (lib.cmakeBool "REGENERATE_METADATA" false)
+    (lib.cmakeBool "USE_BOOST" false)
+  ]
+  ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
+    (lib.cmakeFeature "CMAKE_CROSSCOMPILING_EMULATOR" (stdenv.hostPlatform.emulator buildPackages))
+    (lib.cmakeFeature "PROTOC_BIN" (lib.getExe buildPackages.protobuf))
+  ];
 
   meta = {
     changelog = "https://github.com/google/libphonenumber/blob/${finalAttrs.src.rev}/release_notes.txt";

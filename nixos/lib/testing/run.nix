@@ -2,6 +2,7 @@
   config,
   hostPkgs,
   lib,
+  containers,
   options,
   ...
 }:
@@ -79,6 +80,10 @@ in
     };
   };
 
+  imports = [
+    ../../modules/misc/assertions.nix
+  ];
+
   config = {
     rawTestDerivation = hostPkgs.stdenv.mkDerivation config.rawTestDerivationArg;
     rawTestDerivationArg =
@@ -96,12 +101,15 @@ in
         requiredSystemFeatures = [
           "nixos-test"
         ]
+        # Containers use systemd-nspawn, which requires pid 0 inside of the sandbox.
+        ++ lib.optional (builtins.length (lib.attrNames containers) > 0) "uid-range"
         ++ lib.optional isLinux "kvm"
         ++ lib.optional isDarwin "apple-virt";
 
         nativeBuildInputs = lib.optionals config.enableDebugHook [
           hostPkgs.openssh
           hostPkgs.inetutils
+          hostPkgs.socat # to allow SSH backdoor connections for systemd-nspawn containers
         ];
 
         buildCommand = ''
@@ -127,7 +135,7 @@ in
       };
     test = lib.lazyDerivation {
       # lazyDerivation improves performance when only passthru items and/or meta are used.
-      derivation = config.rawTestDerivation;
+      derivation = lib.asserts.checkAssertWarn config.assertions config.warnings config.rawTestDerivation;
       inherit (config) passthru meta;
     };
 

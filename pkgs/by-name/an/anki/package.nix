@@ -43,57 +43,63 @@ let
   srcHash = "sha256-0hLTQR7f7s58DUgAZbDeREMee6VrqAKHyhS1Hs/Em1A=";
   cargoHash = "sha256-qcB+r9VzBz6ACZaXPL26MOxxtb/h2OIuxyc54vUgfPM=";
   yarnHash = "sha256-EmKeHORr/+qsDzAwtearMi7qodcCgjeAQcy+79HL7Vg=";
-  pythonDeps = with python3Packages; [
-    # anki (pylib) runtime deps
-    decorator
-    distro
-    markdown
-    orjson
-    protobuf
-    requests
-    typing-extensions
+  pythonDeps =
+    with python3Packages;
+    [
+      # anki (pylib) runtime deps
+      decorator
+      distro
+      markdown
+      orjson
+      protobuf
+      requests
+      typing-extensions
 
-    # aqt runtime deps
-    beautifulsoup4
-    flask
-    flask-cors
-    jsonschema
-    pip-system-certs
-    pyqt6
-    pyqt6-sip
-    pyqt6-webengine
-    send2trash
-    waitress
+      # aqt runtime deps
+      beautifulsoup4
+      flask
+      flask-cors
+      jsonschema
+      pip-system-certs
+      pyqt6
+      pyqt6-sip
+      pyqt6-webengine
+      send2trash
+      waitress
 
-    # build-system deps (needed by uv for editable installs)
-    editables
-    hatchling
-    pathspec
-    pluggy
-    setuptools
-    trove-classifiers
+      # build-system deps (needed by uv for editable installs)
+      editables
+      hatchling
+      pathspec
+      pluggy
+      setuptools
+      trove-classifiers
 
-    # transitive deps
-    attrs
-    blinker
-    certifi
-    charset-normalizer
-    click
-    idna
-    itsdangerous
-    jinja2
-    jsonschema-specifications
-    markupsafe
-    packaging
-    pip
-    pysocks
-    referencing
-    rpds-py
-    soupsieve
-    urllib3
-    werkzeug
-    wrapt
-  ];
+      # transitive deps
+      attrs
+      blinker
+      certifi
+      charset-normalizer
+      click
+      idna
+      itsdangerous
+      jinja2
+      jsonschema-specifications
+      markupsafe
+      packaging
+      pip
+      pysocks
+      referencing
+      rpds-py
+      soupsieve
+      urllib3
+      werkzeug
+      wrapt
+    ]
+    ++ lib.optionals stdenv.hostPlatform.isDarwin [
+      anki-audio
+      anki-mac-helper
+    ];
 
   src = fetchFromGitHub {
     owner = "ankitects";
@@ -122,18 +128,15 @@ let
     exec ${yarn}/bin/yarn "$@"
   '';
 
-  uvWheels = runCommand "uv-wheels" {
-    # otherwise, it's too long of a string
-    passAsFile = [ "installCommand" ];
-    installCommand = ''
-      #!${stdenv.shell}
+  uvWheels = runCommand "uv-wheels" { } (
+    ''
       mkdir -p $out
     ''
-    + (lib.strings.concatStringsSep "\n" (map (dep: "ln -vsf ${dep.dist}/*.whl $out") pythonDeps));
-  } "bash $installCommandPath";
+    + (lib.strings.concatMapStringsSep "\n" (dep: "ln -vsf ${dep.dist}/*.whl $out") pythonDeps)
+  );
 in
 
-python3Packages.buildPythonApplication rec {
+python3Packages.buildPythonApplication (finalAttrs: {
   pyproject = false;
   inherit pname version;
 
@@ -158,8 +161,8 @@ python3Packages.buildPythonApplication rec {
 
   missingHashes = ./missing-hashes.json;
   yarnOfflineCache = yarn-berry.fetchYarnBerryDeps {
-    inherit missingHashes;
-    yarnLock = "${src}/yarn.lock";
+    inherit (finalAttrs) missingHashes;
+    yarnLock = "${finalAttrs.src}/yarn.lock";
     hash = yarnHash;
   };
 
@@ -357,4 +360,4 @@ python3Packages.buildPythonApplication rec {
       oxij
     ];
   };
-}
+})

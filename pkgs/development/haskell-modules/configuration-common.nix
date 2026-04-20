@@ -176,6 +176,29 @@ with haskellLib;
     }
   );
 
+  # Stack uses pure nix-shells for certain operations including HTTPS requests
+  # This patch makes stack add pkgs.cacert, so the certificate DB is available.
+  # https://github.com/commercialhaskell/stack/pull/6854 krank:ignore-line
+  stack =
+    appendPatches
+      [
+        (pkgs.fetchpatch {
+          name = "stack-add-cacert-to-pure-shells.patch";
+          url = "https://github.com/commercialhaskell/stack/commit/e869263cbd84a9e59ce1fa467e82993c8e7fb1dd.patch";
+          hash = "sha256-O7GaNgcGBY6m6GHqVtejqOu2HCWWKWXARPnr/upT1RQ=";
+          includes = [ "src/Stack/Nix.hs" ];
+        })
+      ]
+      (
+        overrideCabal (drv: {
+          # Stack's source files use CRLF
+          prePatch = ''
+            ${drv.prePatch or ""}
+            sed -i -e 's/\r$//' src/Stack/Nix.hs
+          '';
+        }) super.stack
+      );
+
   # Extensions wants a specific version of Cabal for its list of Haskell
   # language extensions.
   extensions = doJailbreak (
@@ -459,6 +482,21 @@ with haskellLib;
   # Infinite recursion with test enabled.
   # 2025-02-14: Too strict bounds on attoparsec < 0.14
   attoparsec-varword = doJailbreak (dontCheck super.attoparsec-varword);
+
+  # Fix t_iter test which fails randomly, but frequently. No upstream feedback so far.
+  # https://github.com/haskell/attoparsec/issues/232
+  attoparsec = overrideCabal (drv: {
+    testFlags = drv.testFlags or [ ] ++ [
+      "-p"
+      "$0!=\"tests.buf.t_iter\""
+    ];
+  }) super.attoparsec;
+  attoparsec-isotropic = overrideCabal (drv: {
+    testFlags = drv.testFlags or [ ] ++ [
+      "-p"
+      "$0!=\"tests.leftToRight.buf.t_iter\""
+    ];
+  }) super.attoparsec-isotropic;
 
   # These packages (and their reverse deps) cannot be built with profiling enabled.
   ghc-heap-view = lib.pipe super.ghc-heap-view [
@@ -2743,12 +2781,12 @@ with haskellLib;
         doJailbreak
         # 2022-12-02: Hackage release lags behind actual releases: https://github.com/PostgREST/postgrest/issues/2275
         (overrideSrc rec {
-          version = "14.6";
+          version = "14.8";
           src = pkgs.fetchFromGitHub {
             owner = "PostgREST";
             repo = "postgrest";
             rev = "v${version}";
-            hash = "sha256-VGEkb5Skq2u9MCJdz9xGJOoK0Dg22vAxXFRx2Xg9Dv8=";
+            hash = "sha256-/tRYc6uIViHXnSMoNXElsgW6E+lNXesYk1LOKS6Tdkg=";
           };
         })
       ];
@@ -3614,13 +3652,13 @@ with haskellLib;
 # Manually maintained
 // (
   let
-    version = "1.10.1";
+    version = "1.11.0";
 
     src = pkgs.fetchFromGitHub {
       owner = "cachix";
       repo = "cachix";
       tag = "v${version}";
-      hash = "sha256-kNwoplCrqAymyFIzoR1rpEj0I1Ass+wuP8YsVS61630=";
+      hash = "sha256-CWhnwL2M83/ItapPVeJqCevRoQttesYxJ1h0Mo6ZCXs=";
     };
   in
   {
@@ -3634,9 +3672,6 @@ with haskellLib;
         inherit version;
         src = src + "/cachix";
       })
-      (addBuildDepends [
-        self.pqueue
-      ])
       (
         drv:
         drv.override {

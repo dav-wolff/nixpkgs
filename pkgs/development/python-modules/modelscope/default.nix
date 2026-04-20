@@ -4,26 +4,28 @@
   fetchFromGitHub,
   setuptools,
   filelock,
+  packaging,
   requests,
   tqdm,
 }:
 
 buildPythonPackage (finalAttrs: {
   pname = "modelscope";
-  version = "1.35.0";
+  version = "1.35.4";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "modelscope";
     repo = "modelscope";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-mWcMJWUdxC3Y5rcfx2urMYmYoJXbV5LudPzVB6wxRJA=";
+    hash = "sha256-n33vf7GC4Oucw4/dWXeXeThRrkmSCk1rfS4BWzOxl7I=";
   };
 
   build-system = [ setuptools ];
 
   dependencies = [
     filelock
+    packaging
     requests
     setuptools
     tqdm
@@ -41,6 +43,7 @@ buildPythonPackage (finalAttrs: {
     maintainers = with lib.maintainers; [
       kyehn
       doronbehar
+      ryan4yin
     ];
   };
 })

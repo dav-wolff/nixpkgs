@@ -6,6 +6,7 @@
   gitMinimal,
   fetchFromGitLab,
   glfw,
+  libGL,
   glm,
   spdlog,
   cereal,
@@ -81,7 +82,7 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "mujoco";
-  version = "3.6.0";
+  version = "3.7.0";
 
   # Bumping version? Make sure to look though the MuJoCo's commit
   # history for bumped dependency pins!
@@ -89,10 +90,12 @@ stdenv.mkDerivation (finalAttrs: {
     owner = "google-deepmind";
     repo = "mujoco";
     tag = finalAttrs.version;
-    hash = "sha256-Gxr8AH9grTjrMTHHOVseLuTC3rNuQEZRWhSvR4HgIc4=";
+    hash = "sha256-Ti5Pdr25fck5IdgumiuLIcrI403XawbTePMJY1Fg6/A=";
   };
 
-  patches = [ ./mujoco-system-deps-dont-fetch.patch ];
+  patches = [
+    ./mujoco-system-deps-dont-fetch.patch
+  ];
 
   nativeBuildInputs = [
     cmake
@@ -107,6 +110,11 @@ stdenv.mkDerivation (finalAttrs: {
     spdlog
     cereal
     glfw
+  ];
+
+  propagatedBuildInputs = [
+    # consuming MuJoCo through cmake find_package requires libGL
+    libGL
   ];
 
   cmakeFlags = [

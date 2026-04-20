@@ -11,7 +11,7 @@ let
     ps:
     with ps;
     [
-      # https://github.com/FuzzyGrim/Yamtrack/blob/v0.25.0/requirements.txt
+      # https://github.com/FuzzyGrim/Yamtrack/blob/v0.25.1/requirements.txt
       aiohttp
       apprise
       beautifulsoup4
@@ -23,7 +23,6 @@ let
       django-celery-beat
       django-celery-results
       django-debug-toolbar
-      django-decorator-include
       django-health-check
       django-model-utils
       django-redis
@@ -37,10 +36,12 @@ let
       python-decouple
       redis
       requests
-      requests-ratelimiter_0_8
+      requests-ratelimiter
       unidecode
     ]
     ++ django-allauth.optional-dependencies.socialaccount
+    ++ django-health-check.optional-dependencies.celery
+    ++ django-health-check.optional-dependencies.redis
     ++ psycopg.optional-dependencies.c
     ++ psycopg.optional-dependencies.pool
     ++ redis.optional-dependencies.hiredis
@@ -48,12 +49,12 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "yamtrack";
-  version = "0.25.0";
+  version = "0.25.2";
   src = fetchFromGitHub {
     owner = "FuzzyGrim";
     repo = "Yamtrack";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-dUf8ZVS1lWmP96G2KoPmqsRVypiCCvwtyOMhjEFPm1g=";
+    hash = "sha256-z5HZ5glw+R2u+IsNk/4kFLpiOlvqmGO/SKTiuaGl2s8=";
   };
 
   strictDeps = true;

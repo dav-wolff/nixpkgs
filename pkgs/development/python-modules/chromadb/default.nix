@@ -68,19 +68,19 @@
 
 buildPythonPackage (finalAttrs: {
   pname = "chromadb";
-  version = "1.5.5";
+  version = "1.5.7";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "chroma-core";
     repo = "chroma";
     tag = finalAttrs.version;
-    hash = "sha256-Y/M7awTi2AJTh4xRY0MIfnC9ygy62fG7X3W9QUxW2XE=";
+    hash = "sha256-JrkfLwEL7iTL9P/4UDM4hFQtRL1JYH47dgZ1d+Mphqw=";
   };
 
   cargoDeps = rustPlatform.fetchCargoVendor {
     inherit (finalAttrs) pname version src;
-    hash = "sha256-yx5OMZSWRAP732lRypap79vr2I72aT+TWooo+5e0wDQ=";
+    hash = "sha256-Szy2mSTriMwMViVTbI+0XaizcQBKh1Ncipf84moDREI=";
   };
 
   # Can't use fetchFromGitHub as the build expects a zipfile
@@ -89,16 +89,27 @@ buildPythonPackage (finalAttrs: {
     hash = "sha256-H+kXxA/6rKzYA19v7Zlx2HbIg/DGicD5FDIs0noVGSk=";
   };
 
-  postPatch = ''
+  postPatch =
     # Nixpkgs is taking the version from `chromadb_rust_bindings` which is versioned independently
-    substituteInPlace pyproject.toml \
-      --replace-fail "dynamic = [\"version\"]" "version = \"${finalAttrs.version}\""
-
+    ''
+      substituteInPlace pyproject.toml \
+        --replace-fail "dynamic = [\"version\"]" "version = \"${finalAttrs.version}\""
+    ''
     # Flip anonymized telemetry to opt in versus current opt-in out for privacy
-    substituteInPlace chromadb/config.py \
-      --replace-fail "anonymized_telemetry: bool = True" \
-                     "anonymized_telemetry: bool = False"
-  '';
+    + ''
+      substituteInPlace chromadb/config.py \
+        --replace-fail "anonymized_telemetry: bool = True" \
+                       "anonymized_telemetry: bool = False"
+    ''
+    # error: queries overflow the depth limit!
+    # https://github.com/chroma-core/chroma/issues/6891
+    # https://github.com/chroma-core/chroma/issues/6892
+    # https://github.com/chroma-core/chroma/issues/6687
+    + ''
+      sed -i '1i #![recursion_limit = "256"]' rust/blockstore/src/lib.rs
+      sed -i '1i #![recursion_limit = "256"]' rust/index/src/lib.rs
+      sed -i '1i #![recursion_limit = "256"]' rust/segment/src/lib.rs
+    '';
 
   pythonRelaxDeps = [
     "fastapi"

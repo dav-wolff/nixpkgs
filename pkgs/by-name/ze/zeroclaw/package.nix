@@ -14,13 +14,13 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "zeroclaw";
-  version = "0.3.2";
+  version = "0.5.1";
 
   src = fetchFromGitHub {
     owner = "zeroclaw-labs";
     repo = "zeroclaw";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-4AcWGEnSXdFmq4Fn/ecMrDVoUxSRYxqwiLQ3pcfCKv8=";
+    hash = "sha256-5P+TjAf7i0oUxBCyBtagrmIHPXW2iZ6620PNxVYYjlQ=";
   };
 
   postPatch =
@@ -32,7 +32,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
       ln -s ${zeroclaw-web} web/dist
     '';
 
-  cargoHash = "sha256-NDE+OuYVs9j/wl+nK9hmAEPTbfF6ZOKkANhb+C+dAns=";
+  cargoHash = "sha256-tpgeRLWyye43fuzw2MRevQx8YKEbyOnIgLzjg8EzwCg=";
 
   nativeBuildInputs = [
     pkg-config

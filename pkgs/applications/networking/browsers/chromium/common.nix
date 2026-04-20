@@ -622,6 +622,10 @@ let
         decode = "base64 -d";
         hash = "sha256-iDhDdVscy0tinQCRKXOghrn4ZRwlc8YjPZ0xPv0UMEU=";
       })
+    ]
+    ++ lib.optionals (chromiumVersionAtLeast "147" && lib.versionOlder llvmVersion "23") [
+      # clang++: error: unknown argument: '-fno-lifetime-dse'
+      ./patches/chromium-147-llvm-22.patch
     ];
 
     postPatch =
@@ -757,6 +761,10 @@ let
         ${ungoogler}/utils/patches.py . ${ungoogler}/patches
         ${ungoogler}/utils/domain_substitution.py apply -r ${ungoogler}/domain_regex.list -f ${ungoogler}/domain_substitution.list -c ./ungoogled-domsubcache.tar.gz .
       '';
+
+    # Sadly, Chromium is not even -fstrict-flex-array=1 clean
+    # See https://github.com/NixOS/nixpkgs/issues/499982#issuecomment-4062355720
+    hardeningDisable = [ "strictflexarrays1" ];
 
     llvmCcAndBintools = symlinkJoin {
       name = "llvmCcAndBintools";

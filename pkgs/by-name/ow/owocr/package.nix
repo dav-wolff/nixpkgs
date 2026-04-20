@@ -5,14 +5,14 @@
 }:
 python3Packages.buildPythonApplication (finalAttrs: {
   pname = "owocr";
-  version = "1.26.3";
+  version = "1.26.8";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "AuroraWright";
     repo = "owocr";
     tag = finalAttrs.version;
-    hash = "sha256-/eee0uOWZgjHKhN3Ie75qxXqlSH1Fm3ipDYkvyIK5LM=";
+    hash = "sha256-bdkhuEH2OJspJ9gBmQQAzCimN1Iuj5D6Cdzr0dO0HEc=";
   };
 
   # we use pystray directly to avoid making a new package

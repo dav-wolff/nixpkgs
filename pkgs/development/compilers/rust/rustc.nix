@@ -260,6 +260,9 @@ stdenv.mkDerivation (finalAttrs: {
     ++ optionals stdenv.targetPlatform.isMusl [
       "${setTarget}.musl-root=${pkgsBuildTarget.targetPackages.stdenv.cc.libc}"
     ]
+    ++ optionals stdenv.targetPlatform.isWasi [
+      "${setTarget}.wasi-root=${pkgsBuildTarget.targetPackages.stdenv.cc.libc}"
+    ]
     ++ optionals stdenv.targetPlatform.rust.isNoStdTarget [
       "--disable-docs"
     ]
@@ -458,6 +461,7 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     homepage = "https://www.rust-lang.org/";
     description = "Safe, concurrent, practical language";
+    mainProgram = "rustc";
     teams = [ lib.teams.rust ];
     license = [
       lib.licenses.mit

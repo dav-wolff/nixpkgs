@@ -56,7 +56,7 @@ makeScope newScope (
   in
   {
 
-    inherit callPackage buildOctavePackage computeRequiredOctavePackages;
+    inherit buildOctavePackage computeRequiredOctavePackages;
 
     inherit (callPackage ../development/interpreters/octave/hooks { })
       writeRequiredOctavePackagesHook
@@ -116,7 +116,14 @@ makeScope newScope (
       inherit (pkgs) gsl;
     };
 
-    image = callPackage ../development/octave-modules/image { };
+    image = callPackage ../development/octave-modules/image {
+      inherit (pkgs)
+        mesa
+        gnuplot
+        makeFontsConf
+        writableTmpDirAsHomeHook
+        ;
+    };
 
     image-acquisition = callPackage ../development/octave-modules/image-acquisition { };
 
@@ -149,7 +156,7 @@ makeScope newScope (
     miscellaneous = callPackage ../development/octave-modules/miscellaneous { };
 
     msh = callPackage ../development/octave-modules/msh {
-      # PLACEHOLDER until KarlJoad gets dolfin packaged.
+      # PLACEHOLDER until ravenjoad gets dolfin packaged.
       dolfin = null;
     };
 

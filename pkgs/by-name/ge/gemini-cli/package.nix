@@ -15,18 +15,18 @@
 
 buildNpmPackage (finalAttrs: {
   pname = "gemini-cli";
-  version = "0.31.0";
+  version = "0.38.1";
 
   src = fetchFromGitHub {
     owner = "google-gemini";
     repo = "gemini-cli";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-huPd4W7Jf4/dZshWElicYpcHhktE83wPs/z5jVYwynM=";
+    hash = "sha256-Iq/KxQ8rbLtXDbGzcZxspfFwar189H3mBWwOD4hO7HU=";
   };
 
   nodejs = nodejs_22;
 
-  npmDepsHash = "sha256-iRlwCSGigRi/ilfXi8rI68vlfkeec3vB5nZWPmTLnK8=";
+  npmDepsHash = "sha256-T3fxNFvkLR7f49GQjzzTnl3VM+VUUgJfFF5d2GGe7L4=";
 
   dontPatchElf = stdenv.isDarwin;
 
@@ -117,6 +117,7 @@ buildNpmPackage (finalAttrs: {
       xiaoxiangmoe
       FlameFlag
       taranarmo
+      caverav
     ];
     platforms = lib.platforms.all;
     mainProgram = "gemini";
