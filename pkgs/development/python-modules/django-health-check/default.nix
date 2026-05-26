@@ -22,14 +22,14 @@
 
 buildPythonPackage rec {
   pname = "django-health-check";
-  version = "4.4.0";
+  version = "4.4.1";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "codingjoe";
     repo = "django-health-check";
     tag = version;
-    hash = "sha256-XHautU7asnlm5Pxddf9+UD20v75rbc9Uo7hLjDYt/SU=";
+    hash = "sha256-ijlkgE1ZxlBPUadTeZcwIKYocZo51ZidQyQqFHOnEv4=";
   };
 
   build-system = [
@@ -68,11 +68,19 @@ buildPythonPackage rec {
     "test_run_check__dns_working"
     "test_check_status__nonexistent_hostname"
     "test_check_status__no_answer"
+  ]
+  ++ lib.optionals stdenv.isDarwin [
+    # sensors_temperatures is not available on darwin: https://psutil.readthedocs.io/stable/index.html#psutil.sensors_temperatures
+    "TestTemperature"
+    # some metrics aren't available on darwin: https://psutil.readthedocs.io/stable/index.html#psutil.virtual_memory
+    "TestMemory"
+    # live_server not working on darwin
+    "TestHealthCheckCommand"
   ];
 
   pythonImportsCheck = [ "health_check" ];
 
-  preCheck = lib.optionalString stdenv.hostPlatform.isLinux ''
+  preCheck = ''
     echo "nameserver 127.0.0.1" > resolv.conf
     export NIX_REDIRECTS=/etc/resolv.conf=$(realpath resolv.conf)
   '';

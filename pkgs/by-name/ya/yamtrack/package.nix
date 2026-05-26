@@ -1,9 +1,9 @@
 {
   lib,
   stdenv,
-  runtimeShell,
   python3,
   fetchFromGitHub,
+  makeWrapper,
   nixosTests,
 }:
 let
@@ -49,47 +49,50 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "yamtrack";
-  version = "0.25.2";
+  version = "0.25.3";
   src = fetchFromGitHub {
     owner = "FuzzyGrim";
     repo = "Yamtrack";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-z5HZ5glw+R2u+IsNk/4kFLpiOlvqmGO/SKTiuaGl2s8=";
+    hash = "sha256-6XuV0+2Metrxngkhhbx10Km6s0zWYT0ilrLAwTC7j3c=";
   };
 
   strictDeps = true;
   __structuredAttrs = true;
 
-  nativeBuildInputs = [ python ];
+  nativeBuildInputs = [ python makeWrapper ];
   buildInputs = [ python ];
+
+  postPatch = ''
+    # Yamtrack assumes the database file location (if sqlite is used) is relative to the application.
+    # Since this is located in the read-only nix store, allow setting it via an environment variable.
+    substituteInPlace src/config/settings.py \
+      --replace-fail 'BASE_DIR / "db" / "db.sqlite3"' 'config("DB_FILE")'
+    # Yamtrack doesn't allow configuring the port, which is fine in a docker container but problematic outside.
+    substituteInPlace src/config/gunicorn.py \
+      --replace-fail 'bind = "localhost:8001"' $'import decouple\nbind = "localhost:" + decouple.config("PORT", default="8001")'
+  '';
 
   buildPhase = ''
     runHook preBuild
 
     cd src
-    python manage.py collectstatic --noinput
+    DB_FILE="" python manage.py collectstatic --noinput
 
     runHook postBuild
   '';
 
   installPhase =
     let
-      scriptHeader = ''
-        #!${runtimeShell}
-        cd $out/lib/yamtrack
-        export VERSION=\''${VERSION:-v${finalAttrs.version} (nixpkgs)}
+      makeWrapper = name: executable: args: ''
+        makeWrapper ${executable} $out/bin/${name} \
+          --chdir $out/lib/yamtrack \
+          --set-default VERSION "v${finalAttrs.version} (nixpkgs)" \
+          --add-flags "${args}"
       '';
     in
     ''
       runHook preInstall
-
-      # Yamtrack assumes the database file location (if sqlite is used) is relative to the application.
-      # Since this is located in the read-only nix store, allow setting it via an environment variable.
-      substituteInPlace config/settings.py \
-        --replace-fail 'BASE_DIR / "db" / "db.sqlite3"' 'config("DB_FILE")'
-      # Yamtrack doesn't allow configuring the port, which is fine in a docker container but problematic outside.
-      substituteInPlace config/gunicorn.py \
-        --replace-fail 'bind = "localhost:8001"' $'import decouple\nbind = "localhost:" + decouple.config("PORT", default="8001")'
 
       mkdir -p $out/lib
       cp -r . $out/lib/yamtrack
@@ -97,27 +100,10 @@ stdenv.mkDerivation (finalAttrs: {
       mkdir -p $out/bin
       ln -s $out/lib/yamtrack/manage.py $out/bin/yamtrack-manage
 
-      cat > $out/bin/yamtrack-migrate <<EOF
-      ${scriptHeader}
-      exec ${python.interpreter} manage.py migrate --noinput
-      EOF
-
-      cat > $out/bin/yamtrack <<EOF
-      ${scriptHeader}
-      exec ${python}/bin/gunicorn --config python:config.gunicorn config.wsgi:application
-      EOF
-
-      cat > $out/bin/yamtrack-celery <<EOF
-      ${scriptHeader}
-      exec ${python}/bin/celery --app config worker --without-mingle --without-gossip
-      EOF
-
-      cat > $out/bin/yamtrack-celery-beat <<EOF
-      ${scriptHeader}
-      exec ${python}/bin/celery --app config beat
-      EOF
-
-      chmod +x $out/bin/*
+      ${makeWrapper "yamtrack-migrate" python.interpreter "manage.py migrate --noinput"}
+      ${makeWrapper "yamtrack" (lib.getExe' python "gunicorn") "--config python:config.gunicorn config.wsgi:application"}
+      ${makeWrapper "yamtrack-celery" (lib.getExe' python "celery") "--app config worker --without-mingle --without-gossip"}
+      ${makeWrapper "yamtrack-celery-beat" (lib.getExe' python "celery") "--app config beat"}
 
       runHook postInstall
     '';
