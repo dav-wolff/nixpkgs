@@ -32,14 +32,14 @@
 
 buildPythonPackage rec {
   pname = "paddleocr";
-  version = "3.4.0";
+  version = "3.5.0";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "PaddlePaddle";
     repo = "PaddleOCR";
     tag = "v${version}";
-    hash = "sha256-pKRaE5+9a2W0RiOyDpT8UDjY1XUSJ95CV2VgdCkJpSI=";
+    hash = "sha256-bcunbaocltKGeIeLG8447y6wMFXL08XF7pEhHgoqmrY=";
   };
 
   patches = [

@@ -25,18 +25,28 @@
 }:
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "codex";
-  version = "0.121.0";
+  version = "0.133.0";
 
   src = fetchFromGitHub {
     owner = "openai";
     repo = "codex";
     tag = "rust-v${finalAttrs.version}";
-    hash = "sha256-wjiUMox9V5tFggNgaFyHXWhRlpPerK7W+U/eR2Ddbbc=";
+    hash = "sha256-RTxhhZjZ/64N60pmbNVzLwcSBomn67pPDpOjkL6RPUw=";
   };
 
   sourceRoot = "${finalAttrs.src.name}/codex-rs";
 
-  cargoHash = "sha256-zpQ0vg9XuarLfdZYiRIhcwLHUOdunNbOb5xLW3MPzp8=";
+  cargoHash = "sha256-J4wvPn4lSTSsJrTG56vkhJe2F2b+fUvJLEd+qKQ9LUg=";
+
+  # Match upstream's release build for the codex binary only.
+  cargoBuildFlags = [
+    "--package"
+    "codex-cli"
+  ];
+  cargoCheckFlags = [
+    "--package"
+    "codex-cli"
+  ];
 
   postPatch = ''
     # webrtc-sys asks rustc to link libwebrtc statically by default,
@@ -45,6 +55,9 @@ rustPlatform.buildRustPackage (finalAttrs: {
     # to use the shared library instead
     substituteInPlace $cargoDepsCopy/*/webrtc-sys-*/build.rs \
       --replace-fail "cargo:rustc-link-lib=static=webrtc" "cargo:rustc-link-lib=dylib=webrtc"
+    substituteInPlace Cargo.toml \
+      --replace-fail 'lto = "fat"' "" \
+      --replace-fail 'codegen-units = 1' ""
   '';
 
   nativeBuildInputs = [

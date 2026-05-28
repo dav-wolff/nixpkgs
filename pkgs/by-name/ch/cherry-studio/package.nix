@@ -31,13 +31,13 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "cherry-studio";
-  version = "1.9.1";
+  version = "1.9.4";
 
   src = fetchFromGitHub {
     owner = "CherryHQ";
     repo = "cherry-studio";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-gk/sTkBr7PKBGS96bYVUXGpZuoaech4/0npB+NSstTA=";
+    hash = "sha256-+mfetkw5SibvUky/QoUE4+5SL+v8S4JGq9ZlS9q6Uk0=";
   };
 
   postPatch = ''
@@ -54,7 +54,7 @@ stdenv.mkDerivation (finalAttrs: {
     inherit (finalAttrs) pname version src;
     inherit pnpm;
     fetcherVersion = 3;
-    hash = "sha256-DidMffZQEdYSERZZgDpQ8DqV773iBju89Pa0Z1Gz3I8=";
+    hash = "sha256-6zbnWaeSzvK1NDCXIySS54Pq6siBCuBRJkMa7/NAt1k=";
   };
 
   nativeBuildInputs = [

@@ -95,7 +95,7 @@ let
 
   cudaToolkit = buildEnv {
     # ollama hardcodes the major version in the Makefile to support different variants.
-    # - https://github.com/ollama/ollama/blob/v0.21.0/CMakePresets.json#L21-L47
+    # - https://github.com/ollama/ollama/blob/v0.21.1/CMakePresets.json#L21-L47
     name = "cuda-merged-${cudaMajorVersion}";
     paths = map lib.getLib cudaLibs ++ [
       (lib.getOutput "static" cudaPackages.cuda_cudart)
@@ -141,13 +141,13 @@ let
 in
 goBuild (finalAttrs: {
   pname = "ollama";
-  version = "0.21.0";
+  version = "0.24.0";
 
   src = fetchFromGitHub {
     owner = "ollama";
     repo = "ollama";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-DtrYopNtndQXq9Xjriw5Bqell9A8RHPOvgDF8BlKtdU=";
+    hash = "sha256-cSZtbF0oUI7a++baTipF6OUu+w8tBpILzE0Wm1Y6wUk=";
   };
 
   vendorHash = "sha256-Lc1Ktdqtv2VhJQssk8K1UOimeEjVNvDWePE9WkamCos=";
@@ -168,10 +168,12 @@ goBuild (finalAttrs: {
     cmake
     gitMinimal
   ]
-  ++ lib.optionals enableRocm [
-    rocmPackages.llvm.bintools
+  ++ lib.optionals enableRocm (
     rocmLibs
-  ]
+    ++ [
+      rocmPackages.llvm.bintools
+    ]
+  )
   ++ lib.optionals enableCuda [ cudaPackages.cuda_nvcc ]
   ++ lib.optionals (enableRocm || enableCuda) [
     makeBinaryWrapper
@@ -194,17 +196,25 @@ goBuild (finalAttrs: {
       --replace-fail 0.0.0 '${finalAttrs.version}'
     substituteInPlace cmd/launch/openclaw_test.go \
       --replace-fail '/bin/mkdir' '${coreutils}/bin/mkdir' \
-      --replace-fail '/bin/cat' '${coreutils}/bin/cat'
+      --replace-fail '/bin/cat' '${coreutils}/bin/cat' \
+      --replace-fail '/usr/bin/env' '${coreutils}/bin/env' \
+      --replace-fail '/usr/bin/sort' '${coreutils}/bin/sort' \
+      --replace-fail '/bin/chmod' '${coreutils}/bin/chmod'
     substituteInPlace cmd/launch/hermes_test.go \
       --replace-fail '/bin/mkdir' '${coreutils}/bin/mkdir' \
       --replace-fail '/bin/cat' '${coreutils}/bin/cat' \
       --replace-fail '/bin/chmod' '${coreutils}/bin/chmod'
+    substituteInPlace cmd/launch/kimi_test.go \
+       --replace-fail '/bin/mkdir' '${coreutils}/bin/mkdir' \
+       --replace-fail '/bin/cat' '${coreutils}/bin/cat' \
+       --replace-fail '/bin/chmod' '${coreutils}/bin/chmod'
     rm -r app
   ''
   # disable tests that fail in sandbox due to Metal init failure
   + lib.optionalString stdenv.hostPlatform.isDarwin ''
     rm ml/backend/ggml/ggml_test.go
     rm ml/nn/pooling/pooling_test.go
+    rm model/models/nemotronh/model_omni_test.go
   '';
 
   overrideModAttrs = (
@@ -241,7 +251,7 @@ goBuild (finalAttrs: {
     '';
 
   # ollama looks for acceleration libs in ../lib/ollama/ (now also for CPU-only with arch specific optimizations)
-  # https://github.com/ollama/ollama/blob/v0.21.0/docs/development.md#library-detection
+  # https://github.com/ollama/ollama/blob/v0.21.1/docs/development.md#library-detection
   postInstall = ''
     mkdir -p $out/lib
     cp -r build/lib/ollama $out/lib/
@@ -310,7 +320,6 @@ goBuild (finalAttrs: {
       if (rocmRequested || cudaRequested || vulkanRequested) then platforms.linux else platforms.unix;
     mainProgram = "ollama";
     maintainers = with maintainers; [
-      dit7ya
       prusnak
     ];
   };

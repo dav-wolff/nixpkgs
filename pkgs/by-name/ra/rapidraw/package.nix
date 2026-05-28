@@ -42,20 +42,20 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "rapidraw";
-  version = "1.5.3";
+  version = "1.5.5";
 
   src = fetchFromGitHub {
     owner = "CyberTimon";
     repo = "RapidRAW";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-NYns/hpa8E4oko3qxyrJaTpgH5b+dwr0dTFw+K3IBDo=";
+    hash = "sha256-CnH8EuHzHxuXbnOry2gMU/tMqpE8++ztyNPk3HHdZqE=";
   };
 
-  cargoHash = "sha256-wuTbUPkPJTg6WZYrffrfPm+Asr0PuL5UAsZL+qWM4Oo=";
+  cargoHash = "sha256-c2MK1DyonfeZKfZAVWfwVh/In5SqKq7nnFrlz2686SM=";
 
   npmDeps = fetchNpmDeps {
     inherit (finalAttrs) src;
-    hash = "sha256-CBCj1R6ClnRh5Y4liKNiewRPb2lIb17TSB9eumVcKkY=";
+    hash = "sha256-1A6b63FjNvkAbu62dRXfMjTL1y2wr2gEsZkLqYvTk0w=";
   };
 
   nativeBuildInputs = [
@@ -164,7 +164,10 @@ rustPlatform.buildRustPackage (finalAttrs: {
     homepage = "https://github.com/CyberTimon/RapidRAW";
     license = lib.licenses.agpl3Only;
     mainProgram = "rapidraw";
-    maintainers = with lib.maintainers; [ taciturnaxolotl ];
+    maintainers = with lib.maintainers; [
+      philipdb
+      taciturnaxolotl
+    ];
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
 })

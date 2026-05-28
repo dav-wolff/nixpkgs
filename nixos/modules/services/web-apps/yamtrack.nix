@@ -34,6 +34,20 @@ in
         for available options.
       '';
       default = { };
+      example = {
+        REGISTRATION = false;
+        ADMIN_ENABLED = true;
+      };
+    };
+    environmentFile = mkOption {
+      type = types.nullOr types.path;
+      description = ''
+        File containing environment variables passed to Yamtrack.
+        See the [documentation](https://github.com/FuzzyGrim/Yamtrack/wiki/Environment-Variables)
+        for available options.
+      '';
+      example = "/run/secrets/yamtrack.env";
+      default = null;
     };
     port = mkOption {
       type = types.port;
@@ -82,7 +96,7 @@ in
       enable = true;
       # https://github.com/FuzzyGrim/Yamtrack/blob/v0.25.0/nginx.conf
       virtualHosts.${cfg.virtualHost} = {
-        serverName = lib.mkDefault "yamtrack.localhost";
+        serverName = lib.mkIf (cfg.virtualHost == "yamtrack") (lib.mkDefault "yamtrack.localhost");
         extraConfig = ''
           add_header X-Frame-Options "SAMEORIGIN" always;
           add_header X-Content-Type-Options "nosniff" always;
@@ -114,76 +128,57 @@ in
       wantedBy = [ "multi-user.target" ];
     };
 
-    systemd.services.yamtrack-migrate = {
-      environment = cfg.environment;
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = lib.getExe' cfg.package "yamtrack-migrate";
-        StateDirectory = "yamtrack";
-        StateDirectoryMode = "0700";
-        User = cfg.user;
-        Group = cfg.group;
-        SupplementaryGroups = config.services.redis.servers.yamtrack.group;
+    systemd.services =
+      let
+        commonConfig = {
+          EnvironmentFile = lib.mkIf (cfg.environmentFile != null) cfg.environmentFile;
+          StateDirectory = "yamtrack";
+          StateDirectoryMode = "0700";
+          User = cfg.user;
+          Group = cfg.group;
+          SupplementaryGroups = config.services.redis.servers.yamtrack.group;
+        };
+        serviceDependencies = {
+          requires = [ "yamtrack-migrate.service" ];
+          wantedBy = [ "yamtrack.target" ];
+          partOf = [ "yamtrack.target" ];
+          after = [
+            "network.target"
+            "yamtrack-migrate.service"
+          ];
+        };
+      in
+      {
+        yamtrack-migrate = {
+          environment = cfg.environment;
+          serviceConfig = commonConfig // {
+            Type = "oneshot";
+            ExecStart = lib.getExe' cfg.package "yamtrack-migrate";
+          };
+        };
+
+        yamtrack-main = serviceDependencies // {
+          description = "Yamtrack";
+          environment = cfg.environment;
+          serviceConfig = commonConfig // {
+            ExecStart = lib.getExe' cfg.package "yamtrack";
+          };
+        };
+
+        yamtrack-celery = serviceDependencies // {
+          environment = cfg.environment;
+          serviceConfig = commonConfig // {
+            ExecStart = lib.getExe' cfg.package "yamtrack-celery";
+          };
+        };
+
+        yamtrack-celery-beat = serviceDependencies // {
+          environment = cfg.environment;
+          serviceConfig = commonConfig // {
+            ExecStart = lib.getExe' cfg.package "yamtrack-celery-beat";
+          };
+        };
       };
-    };
-
-    systemd.services.yamtrack-main = {
-      description = "Yamtrack";
-      requires = [ "yamtrack-migrate.service" ];
-      wantedBy = [ "yamtrack.target" ];
-      after = [
-        "network.target"
-        "yamtrack-migrate.service"
-      ];
-      environment = cfg.environment;
-
-      serviceConfig = {
-        ExecStart = lib.getExe' cfg.package "yamtrack";
-        StateDirectory = "yamtrack";
-        StateDirectoryMode = "0700";
-        User = cfg.user;
-        Group = cfg.group;
-        SupplementaryGroups = config.services.redis.servers.yamtrack.group;
-      };
-    };
-
-    systemd.services.yamtrack-celery = {
-      requires = [ "yamtrack-migrate.service" ];
-      wantedBy = [ "yamtrack.target" ];
-      after = [
-        "network.target"
-        "yamtrack-migrate.service"
-      ];
-      environment = cfg.environment;
-
-      serviceConfig = {
-        ExecStart = lib.getExe' cfg.package "yamtrack-celery";
-        StateDirectory = "yamtrack";
-        StateDirectoryMode = "0700";
-        User = cfg.user;
-        Group = cfg.group;
-        SupplementaryGroups = config.services.redis.servers.yamtrack.group;
-      };
-    };
-
-    systemd.services.yamtrack-celery-beat = {
-      requires = [ "yamtrack-migrate.service" ];
-      wantedBy = [ "yamtrack.target" ];
-      after = [
-        "network.target"
-        "yamtrack-migrate.service"
-      ];
-      environment = cfg.environment;
-
-      serviceConfig = {
-        ExecStart = lib.getExe' cfg.package "yamtrack-celery-beat";
-        StateDirectory = "yamtrack";
-        StateDirectoryMode = "0700";
-        User = cfg.user;
-        Group = cfg.group;
-        SupplementaryGroups = config.services.redis.servers.yamtrack.group;
-      };
-    };
   };
 
   meta = {

@@ -6,6 +6,7 @@
   git,
   gmp,
   cadical,
+  makeWrapper,
   pkg-config,
   libuv,
   enableMimalloc ? true,
@@ -13,6 +14,9 @@
   testers,
 }:
 
+let
+  cadical' = cadical.override { version = "2.1.3"; };
+in
 stdenv.mkDerivation (finalAttrs: {
   pname = "lean4";
   version = "4.29.1";
@@ -61,13 +65,19 @@ stdenv.mkDerivation (finalAttrs: {
   nativeBuildInputs = [
     cmake
     pkg-config
+    makeWrapper
   ];
 
   buildInputs = [
     gmp
     libuv
-    cadical
+    cadical'
   ];
+
+  postInstall = ''
+    wrapProgram $out/bin/lean \
+      --prefix PATH : ${cadical'}/bin
+  '';
 
   nativeCheckInputs = [
     git
@@ -79,6 +89,7 @@ stdenv.mkDerivation (finalAttrs: {
   cmakeFlags = [
     "-DUSE_GITHASH=OFF"
     "-DINSTALL_LICENSE=OFF"
+    "-DINSTALL_CADICAL=OFF"
     "-DUSE_MIMALLOC=${if enableMimalloc then "ON" else "OFF"}"
   ];
 

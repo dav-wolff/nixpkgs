@@ -16,19 +16,17 @@
   makeWrapper,
   replaceVars,
 
-  vulkan-loader,
-
   nixosTests,
 }:
 buildNpmPackage (finalAttrs: {
   pname = "repath-studio";
-  version = "0.4.13";
+  version = "0.4.14";
 
   src = fetchFromGitHub {
     owner = "repath-studio";
     repo = "repath-studio";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-YqBbhx5WDAElfNpPpSf1qXddK3kZhqGnHhXu/qVl1BA=";
+    hash = "sha256-El3gXpfNofHev84tpa0v16y2Sjdo6kmlm44hgHcinCk=";
   };
 
   patches = [
@@ -47,7 +45,7 @@ buildNpmPackage (finalAttrs: {
 
   makeCacheWritable = true;
 
-  npmDepsHash = "sha256-uTcHerTZwzeTFhjNs5ExgJU6u2fjDT5YlZemo3qNQOg=";
+  npmDepsHash = "sha256-gOk/hHWGLwAxPIBqasoUzfszPv911afb/VLn7w7g5KE=";
 
   nativeBuildInputs = [
     finalAttrs.passthru.clojureWithCache
@@ -72,19 +70,13 @@ buildNpmPackage (finalAttrs: {
   buildPhase = ''
     runHook preBuild
 
-    # electronDist needs to be modifiable
-    cp -r ${electron.dist} electron-dist
-    chmod -R u+w electron-dist
-  ''
-  # Electron builder complains about symlink in electron-dist
-  + lib.optionalString stdenv.hostPlatform.isLinux ''
-    rm electron-dist/libvulkan.so.1
-    cp ${lib.getLib vulkan-loader}/lib/libvulkan.so.1 electron-dist
-  ''
-  + ''
+    electron_dist="$(mktemp -d)"
+    cp -r ${electron.dist}/. "$electron_dist"
+    chmod -R u+w "$electron_dist"
+
     npm run build
     npm exec electron-builder -- --dir \
-      -c.electronDist=electron-dist \
+      -c.electronDist="$electron_dist" \
       -c.electronVersion=${electron.version}
 
     runHook postBuild
@@ -123,7 +115,7 @@ buildNpmPackage (finalAttrs: {
   doCheck = stdenv.hostPlatform.isLinux;
   checkPhase = ''
     runHook preCheck
-    export ELECTRON_OVERRIDE_DIST_PATH=electron-dist/
+    export ELECTRON_OVERRIDE_DIST_PATH="$electron_dist"
     export PUPPETEER_EXECUTABLE_PATH=${chromium}/bin/chromium
     export CHROME_BIN=${chromium}/bin/chromium
     npm run test
@@ -181,7 +173,7 @@ buildNpmPackage (finalAttrs: {
 
       dontFixup = true;
 
-      outputHash = "sha256-rh9dcgk4qZkBDguUGFCE6ZcPnqBG/v4jlT8py1PUHYM=";
+      outputHash = "sha256-fwKeKfOIAWj9HQdXpEafZuJz5jwXNKpkS0JmuP3FXo0=";
       outputHashMode = "recursive";
       outputHashAlgo = "sha256";
     };
@@ -195,7 +187,7 @@ buildNpmPackage (finalAttrs: {
   };
 
   meta = {
-    changelog = "https://github.com/repath-studio/repath-studio/blob/v${finalAttrs.src.rev}/CHANGELOG.md";
+    changelog = "https://github.com/repath-studio/repath-studio/blob/${finalAttrs.src.rev}/CHANGELOG.md";
     description = "Cross-platform vector graphics editor, that combines procedural tooling with traditional design workflows";
     homepage = "https://repath.studio";
     downloadPage = "https://github.com/repath-studio/repath-studio";

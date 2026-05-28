@@ -23,10 +23,10 @@
       machine.wait_for_open_port(8002) # yamtrack
       machine.wait_for_open_port(80) # nginx
 
-      res = machine.succeed("curl http://localhost -L")
+      res = machine.succeed("curl http://yamtrack.localhost -L")
       assert "Yamtrack" in res
 
-      res = machine.succeed("curl http://localhost/static/css/main.css")
+      res = machine.succeed("curl http://yamtrack.localhost/static/css/main.css")
       assert "font-family" in res
   '';
 

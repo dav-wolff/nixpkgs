@@ -60,7 +60,10 @@ stdenv.mkDerivation (finalAttrs: {
   strictDeps = true;
   __structuredAttrs = true;
 
-  nativeBuildInputs = [ python makeWrapper ];
+  nativeBuildInputs = [
+    python
+    makeWrapper
+  ];
   buildInputs = [ python ];
 
   postPatch = ''
@@ -101,8 +104,12 @@ stdenv.mkDerivation (finalAttrs: {
       ln -s $out/lib/yamtrack/manage.py $out/bin/yamtrack-manage
 
       ${makeWrapper "yamtrack-migrate" python.interpreter "manage.py migrate --noinput"}
-      ${makeWrapper "yamtrack" (lib.getExe' python "gunicorn") "--config python:config.gunicorn config.wsgi:application"}
-      ${makeWrapper "yamtrack-celery" (lib.getExe' python "celery") "--app config worker --without-mingle --without-gossip"}
+      ${makeWrapper "yamtrack" (lib.getExe' python "gunicorn")
+        "--config python:config.gunicorn config.wsgi:application"
+      }
+      ${makeWrapper "yamtrack-celery" (lib.getExe' python "celery")
+        "--app config worker --without-mingle --without-gossip"
+      }
       ${makeWrapper "yamtrack-celery-beat" (lib.getExe' python "celery") "--app config beat"}
 
       runHook postInstall

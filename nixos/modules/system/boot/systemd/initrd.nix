@@ -7,9 +7,29 @@
   ...
 }:
 
-with lib;
-
 let
+  inherit (lib)
+    filter
+    elem
+    filterAttrs
+    concatLists
+    mapAttrsToList
+    getBin
+    concatStringsSep
+    mkEnableOption
+    mkOption
+    types
+    literalExpression
+    mkIf
+    any
+    isBool
+    isString
+    optionalAttrs
+    mapAttrs'
+    nameValuePair
+    listToAttrs
+    ;
+
   inherit (utils) systemdUtils escapeSystemdPath;
   inherit (systemdUtils.unitOptions) unitOption;
   inherit (systemdUtils.lib)
@@ -26,6 +46,12 @@ let
     ;
 
   cfg = config.boot.initrd.systemd;
+
+  withKmod =
+    let
+      kconfig = config.system.build.kernel.config;
+    in
+    kconfig.isSet "MODULES" -> kconfig.isYes "MODULES";
 
   upstreamUnits = [
     "basic.target"
@@ -248,7 +274,7 @@ in
       '';
       example = literalExpression ''
         {
-          umount = ''${pkgs.util-linux}/bin/umount;
+          umount = "''${pkgs.util-linux}/bin/umount";
         }
       '';
       type = types.attrsOf types.path;
@@ -505,7 +531,7 @@ in
         pkgs.coreutils
         cfg.package
       ]
-      ++ lib.optional (config.system.build.kernel.config.isYes "MODULES") cfg.package.kmod
+      ++ lib.optional withKmod cfg.package.kmod
       ++ lib.optionals cfg.shell.enable [
         # bashInteractive is easier to use and also required by debug-shell.service
         pkgs.bashInteractive
@@ -555,7 +581,7 @@ in
       // optionalAttrs (config.environment.etc ? "modprobe.d/nixos.conf") {
         "/etc/modprobe.d/nixos.conf".source = config.environment.etc."modprobe.d/nixos.conf".source;
       }
-      // optionalAttrs (with config.system.build.kernel.config; isSet "MODULES" -> isYes "MODULES") {
+      // optionalAttrs withKmod {
         "/lib".source = "${config.system.build.modulesClosure}/lib";
 
         "/etc/modules-load.d/nixos.conf".text = concatStringsSep "\n" config.boot.initrd.kernelModules;
@@ -639,6 +665,10 @@ in
             nameValuePair "${n}.automount" (automountToUnit v)
           ) cfg.automounts
         );
+
+      services."modprobe@" = lib.mkIf withKmod {
+        serviceConfig.ExecSearchPath = lib.makeBinPath [ cfg.package.kmod ];
+      };
 
       services.initrd-find-nixos-closure = lib.mkIf (!config.system.nixos-init.enable) {
         description = "Find NixOS closure";

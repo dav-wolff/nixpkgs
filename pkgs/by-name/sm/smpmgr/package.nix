@@ -7,14 +7,14 @@
 
 python3Packages.buildPythonApplication (finalAttrs: {
   pname = "smpmgr";
-  version = "0.17.0";
+  version = "0.18.0";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "intercreate";
     repo = "smpmgr";
     tag = finalAttrs.version;
-    hash = "sha256-EWvTt0bfkHA+E9nkoI8u17j6zevbDofGUxHpFXoUGyo=";
+    hash = "sha256-wH9WdZXN1sR+uEOo/LupaIqYVzuHHyOX1EimD7MVNFw=";
   };
 
   build-system = with python3Packages; [
@@ -27,11 +27,14 @@ python3Packages.buildPythonApplication (finalAttrs: {
     "smpclient"
   ];
 
-  dependencies = with python3Packages; [
-    readchar
-    smpclient
-    typer
-  ];
+  dependencies =
+    with python3Packages;
+    [
+      readchar
+      smpclient
+      typer
+    ]
+    ++ smpclient.optional-dependencies.all;
 
   nativeCheckInputs = with python3Packages; [
     pytestCheckHook

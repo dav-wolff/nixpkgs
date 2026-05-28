@@ -9,6 +9,7 @@
   wrapGAppsHook4,
   appstream-glib,
   desktop-file-utils,
+  fvs2,
   librsvg,
   gtk4,
   gtksourceview5,
@@ -24,6 +25,7 @@
   gamescope,
   mangohud,
   vkbasalt-cli,
+  vulkan-tools,
   vmtouch,
   libportal,
   nix-update-script,
@@ -86,7 +88,6 @@ python3Packages.buildPythonApplication (finalAttrs: {
       icoextract
       patool
       pathvalidate
-      fvs
       orjson
       pycairo
       pygobject3
@@ -103,11 +104,13 @@ python3Packages.buildPythonApplication (finalAttrs: {
       xdpyinfo
       imagemagick
       vkbasalt-cli
+      vulkan-tools
 
       gamemode
       gamescope
       mangohud
       vmtouch
+      fvs2
 
       # Undocumented (subprocess.Popen())
       lsb-release

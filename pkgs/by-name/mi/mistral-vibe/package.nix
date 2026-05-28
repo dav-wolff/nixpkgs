@@ -28,14 +28,15 @@ let
 in
 python3Packages.buildPythonApplication (finalAttrs: {
   pname = "mistral-vibe";
-  version = "2.7.3";
+  version = "2.11.0";
   pyproject = true;
+  __structuredAttrs = true;
 
   src = fetchFromGitHub {
     owner = "mistralai";
     repo = "mistral-vibe";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-XRBrBd7X8HewrUJ7K8wQMcVJz3ITPKzyKpyCi7detsE=";
+    hash = "sha256-s0mgWOKO+kKwJivnZw2IJRhGRET000ApvuhK6OovIIw=";
   };
 
   build-system = with python3Packages; [
@@ -44,53 +45,103 @@ python3Packages.buildPythonApplication (finalAttrs: {
     hatchling
   ];
 
-  pythonRelaxDeps = [
-    "agent-client-protocol"
-    "cryptography"
-    "gitpython"
-    "mistralai"
-    "opentelemetry-exporter-otlp-proto-http"
-    "opentelemetry-sdk"
-    "opentelemetry-semantic-conventions"
-    "pydantic-settings"
-    "zstandard"
-  ];
-  dependencies = with python3Packages; [
-    agent-client-protocol
-    anyio
-    cachetools
-    cryptography
-    gitpython
-    giturlparse
-    google-auth
-    httpx
-    keyring
-    markdownify
-    mcp
-    mistralai
-    opentelemetry-api
-    opentelemetry-exporter-otlp-proto-http
-    opentelemetry-sdk
-    opentelemetry-semantic-conventions
-    packaging
-    pexpect
-    pydantic
-    pydantic-settings
-    pyperclip
-    python-dotenv
-    pyyaml
-    requests
-    rich
-    sounddevice
-    textual
-    textual-speedups
-    tomli-w
-    tree-sitter
-    tree-sitter-bash
-    watchfiles
-    websockets
-    zstandard
-  ];
+  pythonRelaxDeps = true;
+  dependencies =
+    with python3Packages;
+    [
+      agent-client-protocol
+      annotated-types
+      anyio
+      attrs
+      beautifulsoup4
+      cachetools
+      certifi
+      cffi
+      charset-normalizer
+      click
+      cryptography
+      eval-type-backport
+      gitdb
+      gitpython
+      giturlparse
+      google-auth
+      googleapis-common-protos
+      h11
+      httpcore
+      httpx
+      httpx-sse
+      idna
+      importlib-metadata
+      jaraco-classes
+      jaraco-context
+      jaraco-functools
+      jsonpatch
+      jsonpath-python
+      jsonpointer
+      jsonschema
+      jsonschema-specifications
+      keyring
+      linkify-it-py
+      markdown-it-py
+      markdownify
+      mcp
+      mdit-py-plugins
+      mdurl
+      mistralai
+      more-itertools
+      opentelemetry-api
+      opentelemetry-exporter-otlp-proto-common
+      opentelemetry-exporter-otlp-proto-http
+      opentelemetry-proto
+      opentelemetry-sdk
+      opentelemetry-semantic-conventions
+      packaging
+      pexpect
+      platformdirs
+      protobuf
+      ptyprocess
+      pyasn1
+      pyasn1-modules
+      pycparser
+      pydantic
+      pydantic-core
+      pydantic-settings
+      pygments
+      pyjwt
+      pyperclip
+      python-dateutil
+      python-dotenv
+      python-multipart
+      pyyaml
+      referencing
+      requests
+      rich
+      rpds-py
+      six
+      smmap
+      sounddevice
+      soupsieve
+      sse-starlette
+      starlette
+      textual
+      textual-speedups
+      tomli-w
+      tree-sitter
+      tree-sitter-bash
+      typing-extensions
+      typing-inspection
+      uc-micro-py
+      urllib3
+      uvicorn
+      watchfiles
+      websockets
+      zipp
+      zstandard
+    ]
+    ++ lib.optionals stdenv.hostPlatform.isLinux [
+      jeepney
+      secretstorage
+    ];
 
   pythonImportsCheck = [ "vibe" ];
 
@@ -100,6 +151,7 @@ python3Packages.buildPythonApplication (finalAttrs: {
     python3Packages.pytest-xdist
     python3Packages.pytestCheckHook
     python3Packages.respx
+    python3Packages.tomlkit
     uv
     versionCheckHook
     writableTmpDirAsHomeHook
@@ -160,6 +212,9 @@ python3Packages.buildPythonApplication (finalAttrs: {
   ];
 
   disabledTestPaths = [
+    # This tests the install_script and fails. This is not relevant for nixpkgs.
+    "tests/test_install_script.py"
+
     # All snapshot tests fail with AssertionError
     "tests/snapshots/"
 

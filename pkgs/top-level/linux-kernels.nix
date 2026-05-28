@@ -27,20 +27,6 @@ let
     vanillaPackages
     rpiPackages
     ;
-
-  markBroken =
-    drv:
-    drv.overrideAttrs (
-      {
-        meta ? { },
-        ...
-      }:
-      {
-        meta = meta // {
-          broken = true;
-        };
-      }
-    );
 in
 {
   kernelPatches = callPackage ../os-specific/linux/kernel/patches.nix { };
@@ -100,14 +86,6 @@ in
 
         linux_6_18 = callPackage ../os-specific/linux/kernel/mainline.nix {
           branch = "6.18";
-          kernelPatches = [
-            kernelPatches.bridge_stp_helper
-            kernelPatches.request_key_helper
-          ];
-        };
-
-        linux_6_19 = callPackage ../os-specific/linux/kernel/mainline.nix {
-          branch = "6.19";
           kernelPatches = [
             kernelPatches.bridge_stp_helper
             kernelPatches.request_key_helper
@@ -188,6 +166,7 @@ in
         linux_6_15 = throw "linux 6.15 was removed because it has reached its end of life upstream";
         linux_6_16 = throw "linux 6.16 was removed because it has reached its end of life upstream";
         linux_6_17 = throw "linux 6.17 was removed because it has reached its end of life upstream";
+        linux_6_19 = throw "linux 6.19 was removed because it has reached its end of life upstream";
 
         linux_5_10_hardened = throw "linux_hardened on nixpkgs only contains latest stable and latest LTS";
         linux_5_15_hardened = throw "linux_hardened on nixpkgs only contains latest stable and latest LTS";
@@ -642,7 +621,7 @@ in
 
         drbd = callPackage ../os-specific/linux/drbd/driver.nix { };
 
-        nullfs = callPackage ../os-specific/linux/nullfs { };
+        nullfsvfs = callPackage ../os-specific/linux/nullfsvfs { };
 
         msi-ec = callPackage ../os-specific/linux/msi-ec { };
 
@@ -668,6 +647,7 @@ in
         system76-power = lib.warnOnInstantiate "kernelPackages.system76-power is now pkgs.system76-power" pkgs.system76-power; # Added 2024-10-16
         system76-scheduler = lib.warnOnInstantiate "kernelPackages.system76-scheduler is now pkgs.system76-scheduler" pkgs.system76-scheduler; # Added 2024-10-16
         tuxedo-keyboard = self.tuxedo-drivers; # Added 2024-09-28
+        nullfs = self.nullfsvfs; # Added 2026-05-16
         phc-intel = throw "phc-intel drivers are no longer supported by any kernel >=4.17"; # added 2025-07-18
         prl-tools = throw "Parallel Tools no longer provide any kernel module, please use pkgs.prl-tools instead."; # added 2025-10-04
         nvidia_dc_565 = throw "nvidiaPackages.dc_565 has reached end of life, see https://endoflife.date/nvidia"; # added 2026-02-10
@@ -684,7 +664,6 @@ in
     linux_6_6 = recurseIntoAttrs (packagesFor kernels.linux_6_6);
     linux_6_12 = recurseIntoAttrs (packagesFor kernels.linux_6_12);
     linux_6_18 = recurseIntoAttrs (packagesFor kernels.linux_6_18);
-    linux_6_19 = recurseIntoAttrs (packagesFor kernels.linux_6_19);
     linux_7_0 = recurseIntoAttrs (packagesFor kernels.linux_7_0);
   }
   // lib.optionalAttrs config.allowAliases {
@@ -698,6 +677,7 @@ in
     linux_6_15 = throw "linux 6.15 was removed because it reached its end of life upstream"; # Added 2025-08-23
     linux_6_16 = throw "linux 6.16 was removed because it reached its end of life upstream"; # Added 2025-10-22
     linux_6_17 = throw "linux 6.17 was removed because it reached its end of life upstream"; # Added 2025-12-22
+    linux_6_19 = throw "linux 6.19 was removed because it reached its end of life upstream"; # Added 2026-04-23
   };
 
   rpiPackages = {

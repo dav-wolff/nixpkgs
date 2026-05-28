@@ -5,14 +5,17 @@
   fetchFromGitHub,
   fetchPnpmDeps,
   pnpmConfigHook,
-  pnpm_10,
+  pnpm_11,
   nodejs_22,
   makeWrapper,
   versionCheckHook,
   rolldown,
   installShellFiles,
-  version ? "2026.4.12",
+  version ? "2026.5.12",
 }:
+let
+  pnpm = pnpm_11.override { nodejs = nodejs_22; };
+in
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "openclaw";
   version = version;
@@ -21,15 +24,15 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     owner = "openclaw";
     repo = "openclaw";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-d0/Y3s+MQFaG1lZr9nk00KU7bJhglApFZFLRCLJ4Hc4=";
+    hash = "sha256-URuoljISNcDLuWUwOpZoFjPNVOmbThC9r00uShPR4Co=";
   };
 
-  pnpmDepsHash = "sha256-Tkraoxlux/lUS1ilpAIvSl5VUT0ZA9DWptNXRNl8B8o=";
+  pnpmDepsHash = "sha256-pLQoA9eyHD84E0Rp8MMqfu95tGJtDEMbY+fh0nHjdWo=";
 
   pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname version src;
-    pnpm = pnpm_10;
-    fetcherVersion = 3;
+    inherit pnpm;
+    fetcherVersion = 4;
     hash = finalAttrs.pnpmDepsHash;
   };
 
@@ -37,7 +40,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
   nativeBuildInputs = [
     pnpmConfigHook
-    pnpm_10
+    pnpm
     nodejs_22
     makeWrapper
     installShellFiles
@@ -58,27 +61,6 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     chmod -R u+w node_modules/rolldown node_modules/@rolldown/pluginutils \
       node_modules/.pnpm/node_modules/rolldown node_modules/.pnpm/node_modules/@rolldown/pluginutils
 
-    # In Nix sandbox, npm install has no network access.
-    # 1) Skip missing/mismatched deps in closure walk instead of aborting.
-    # 2) Never fall through to the npm-install path.
-    substituteInPlace scripts/stage-bundled-plugin-runtime-deps.mjs \
-      --replace-fail \
-        'if (installedVersion === null || !dependencyVersionSatisfied(spec, installedVersion)) {
-          return null;
-        }' \
-        'if (installedVersion === null || !dependencyVersionSatisfied(spec, installedVersion)) {
-          continue;
-        }' \
-      --replace-fail \
-        'stageInstalledRootRuntimeDeps({ fingerprint, packageJson, pluginDir, repoRoot })
-      ) {
-        return;
-      }' \
-        'stageInstalledRootRuntimeDeps({ fingerprint, packageJson, pluginDir, repoRoot })
-      ) {
-        return;
-      }
-      return; // nix: sandbox has no npm'
     pnpm build
     pnpm ui:build
 
@@ -93,7 +75,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
 
     cp --reflink=auto -r package.json dist node_modules $libdir/
-    cp --reflink=auto -r assets docs skills patches extensions qa $libdir/
+    cp --reflink=auto -r docs skills patches extensions qa $libdir/
 
     rm -f $libdir/node_modules/.pnpm/node_modules/clawdbot \
       $libdir/node_modules/.pnpm/node_modules/moltbot \
@@ -121,7 +103,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
       installShellCompletion --cmd openclaw \
         --bash <(${emulator} $out/bin/openclaw completion --shell bash) \
         --fish <(${emulator} $out/bin/openclaw completion --shell fish) \
-        --zsh <(${emulator} $out/bin/openclaw completion --shell zsh)
+        --zsh  <(${emulator} $out/bin/openclaw completion --shell zsh)
     ''
   );
 

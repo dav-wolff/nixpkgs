@@ -44,6 +44,7 @@ let
             pname = namePrefix + pluginName;
 
             strictDeps = true;
+            __structuredAttrs = true;
 
             inherit
               pluginName
@@ -75,14 +76,14 @@ in
 {
   inherit mkTmuxPlugin;
 
-  battery = mkTmuxPlugin {
+  battery = mkTmuxPlugin rec {
     pluginName = "battery";
-    version = "unstable-2019-07-04";
+    version = "2.0.0";
     src = fetchFromGitHub {
       owner = "tmux-plugins";
       repo = "tmux-battery";
-      rev = "f8b8e8451990365e0c98c38c184962e4f83b793b";
-      hash = "sha256-NfKaM4dPt7YaxG7kHMNxf95Mz0hIEhxqlVi2Obr+Da4=";
+      tag = "v${version}";
+      hash = "sha256-kyUrJdraDDye8WEBP2RgHN7kHmafToYtLmrMJ9u0f+0=";
     };
   };
 
@@ -242,12 +243,12 @@ in
 
   dotbar = mkTmuxPlugin rec {
     pluginName = "dotbar";
-    version = "0.3.0";
+    version = "0.3.2";
     src = fetchFromGitHub {
       owner = "vaaleyard";
       repo = "tmux-dotbar";
       tag = version;
-      hash = "sha256-n9k18pJnd5mnp9a7VsMBmEHDwo3j06K6/G6p7/DTyIY=";
+      hash = "sha256-WaRKepmPqiE+W8Tm0dBc6hGiqqZP122eXjrG0rJnt0w=";
     };
     meta = {
       homepage = "https://github.com/vaaleyard/tmux-dotbar";
@@ -378,6 +379,13 @@ in
       repo = "tmux-gruvbox";
       tag = "v${version}";
       hash = "sha256-TuWPw6sk61k7GnHwN2zH6x6mGurTHiA9f0E6NJfMa6g=";
+    };
+    meta = {
+      homepage = "https://github.com/egel/tmux-gruvbox";
+      description = "Gruvbox colorscheme for Tmux";
+      license = lib.licenses.gpl3Only;
+      platforms = lib.platforms.unix;
+      maintainers = with lib.maintainers; [ viena ];
     };
   };
 
@@ -762,6 +770,42 @@ in
     };
   };
 
+  search-panes = mkTmuxPlugin {
+    pluginName = "search-panes";
+    version = "0-unstable-2025-07-27";
+    src = fetchFromGitHub {
+      owner = "multi-io";
+      repo = "tmux-search-panes";
+      rev = "3996b5c56c6be69d3a85ef26065b1877d9ac71c6";
+      hash = "sha256-Z9Gu4v2LAyG6UxXVLTvQUz1wU4PaJlBQXjLiSzfSP7s=";
+    };
+    rtpFilePath = "tmux-search-panes.tmux";
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postInstall = ''
+      for f in search-panes.sh _fzf-and-switch.sh _render-preview.sh; do
+        chmod +x $target/bin/$f
+        wrapProgram $target/bin/$f \
+          --prefix PATH : ${
+            with pkgs;
+            lib.makeBinPath [
+              coreutils
+              fzf
+              gnugrep
+              gnused
+              tmux
+            ]
+          }
+      done
+    '';
+    meta = {
+      homepage = "https://github.com/multi-io/tmux-search-panes";
+      description = "Tmux plugin that allows you to perform a fulltext search";
+      license = lib.licenses.mit;
+      platforms = lib.platforms.unix;
+      maintainers = [ lib.maintainers.DieracDelta ];
+    };
+  };
+
   sensible = mkTmuxPlugin {
     pluginName = "sensible";
     version = "unstable-2022-08-14";
@@ -1056,6 +1100,49 @@ in
     };
   };
 
+  tmux-sm = mkTmuxPlugin {
+    pluginName = "tmux-sm";
+    version = "0-unstable-2026-05-14";
+    src = fetchFromGitHub {
+      owner = "vimlinuz";
+      repo = "tmux-sm";
+      rev = "97d411a11d124443c982d17fde03c1e09809d7b1";
+      hash = "sha256-7HW/TLP/yyQp4j0/utA0tibTv+suV1B2K56pUS3Z004=";
+    };
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    rtpFilePath = "main.tmux";
+    postInstall = ''
+      chmod +x $target/scripts/session-manager
+      wrapProgram $target/scripts/session-manager \
+        --prefix PATH : ${
+          with pkgs;
+          lib.makeBinPath [
+            fzf
+            gawk
+            coreutils
+          ]
+        }
+      chmod +x $target/scripts/sessionizer
+      wrapProgram $target/scripts/sessionizer \
+        --prefix PATH : ${
+          with pkgs;
+          lib.makeBinPath [
+            fzf
+            tree
+            findutils
+            coreutils
+          ]
+        }
+    '';
+    meta = {
+      homepage = "https://github.com/vimlinuz/tmux-sm";
+      description = "Fuzzy terminal popup to manage tmux sessions using `fzf`";
+      license = lib.licenses.mit;
+      platforms = lib.platforms.unix;
+      maintainers = with lib.maintainers; [ vimlinuz ];
+    };
+  };
+
   tmux-thumbs = pkgs.callPackage ./tmux-thumbs {
     inherit mkTmuxPlugin;
   };
@@ -1072,7 +1159,7 @@ in
     };
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postInstall = ''
-      wrapProgram $out/share/tmux-plugins/t-smart-tmux-session-manager/bin/t \
+      wrapProgram $target/bin/t \
           --prefix PATH : ${
 
             lib.makeBinPath [
@@ -1188,12 +1275,12 @@ in
   tmux-toggle-popup = mkTmuxPlugin rec {
     pluginName = "tmux-toggle-popup";
     rtpFilePath = "toggle-popup.tmux";
-    version = "0.4.4";
+    version = "0.5.1";
     src = fetchFromGitHub {
       owner = "loichyan";
       repo = "tmux-toggle-popup";
       tag = "v${version}";
-      hash = "sha256-tiiM5ETSrceyAyqhYRXjG1qCbjzZ0NJL5GWWbWX7Cbo=";
+      hash = "sha256-daUCkt1Np8ZYvLc3Bx0HvhnI988q7lIayJju/GB6Klw=";
     };
     meta = {
       homepage = "https://github.com/loichyan/tmux-toggle-popup";

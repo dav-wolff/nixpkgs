@@ -20,7 +20,7 @@
 # This hook also provides an `installFont` function that can be used to install
 # additional fonts of a particular extension into their respective folder.
 #
-postInstallHooks+=(installFonts)
+preInstallHooks+=(installFonts)
 
 installFont() {
   if (($# != 2)); then
@@ -52,6 +52,9 @@ installFonts() {
   if [ -n "${webfont-}" ]; then
     installFont 'woff' "$webfont/share/fonts/woff"
     installFont 'woff2' "$webfont/share/fonts/woff2"
+  elif [[ "${dontInstallWebfonts-}" != 1 && -n "$(find . \( -iname "*.woff" -o -iname "*.woff2" \) -print)" ]]; then
+    nixErrorLog "Consider adding \"webfont\" to outputs to install woff/woff2 files."
+    nixErrorLog "Alternatively, set dontInstallWebfonts to silence this."
+    exit 1
   fi
-
 }

@@ -4,6 +4,7 @@
   callPackage,
   fetchFromGitHub,
   fetchPypi,
+  fetchpatch,
   python314,
   replaceVars,
   ffmpeg-headless,
@@ -223,6 +224,15 @@ let
         doCheck = false;
       });
 
+      serialx = super.serialx.overridePythonAttrs (oldAttrs: {
+        # many components use the serialx[esphome] implicitly
+        dependencies = oldAttrs.dependencies or [ ] ++ oldAttrs.optional-dependencies.esphome;
+        disabledTests = oldAttrs.disabledTests or [ ] ++ [
+          # network access, only runs with esphome extra
+          "test_connect_timeout_raises_timeout_error"
+        ];
+      });
+
       # internal python packages only consumed by home-assistant itself
       hass-web-proxy-lib = self.callPackage ./python-modules/hass-web-proxy-lib { };
       home-assistant-frontend = self.callPackage ./frontend.nix { };
@@ -253,7 +263,7 @@ let
   extraBuildInputs = extraPackages python.pkgs;
 
   # Don't forget to run update-component-packages.py after updating
-  hassVersion = "2026.4.3";
+  hassVersion = "2026.5.4";
 
 in
 python.pkgs.buildPythonApplication rec {
@@ -274,13 +284,13 @@ python.pkgs.buildPythonApplication rec {
     owner = "home-assistant";
     repo = "core";
     tag = version;
-    hash = "sha256-65LZU4OpvVeV70xujI3kd/8VIzZh723l9F5xe8qEvX4=";
+    hash = "sha256-Z5FUkljaWRr9tfBb6RXJCC86ZbyNkw0PvUcOl+bZ2cc=";
   };
 
   # Secondary source is pypi sdist for translations
   sdist = fetchPypi {
     inherit pname version;
-    hash = "sha256-P76HVL5NW8TOpic1kRUXxeMeAtsy+UxkmTvsc0J+6nY=";
+    hash = "sha256-o5S6rnOTqzPLZpMBxgmp9IpmLlEHLvHTH68ql2EkVbI=";
   };
 
   build-system = with python.pkgs; [
@@ -296,18 +306,31 @@ python.pkgs.buildPythonApplication rec {
 
   # leave this in, so users don't have to constantly update their downstream patch handling
   patches = [
-    # https://github.com/home-assistant/core/pull/165143
-    ./pyjwt-2.11.patch
-
     # Follow symlinks in /var/lib/hass/www
     ./patches/static-follow-symlinks.patch
 
     # Copy default blueprints without preserving permissions
     ./patches/default-blueprint-permissions.patch
 
+    # No scaring our users about not running in a docker or a venv
+    ./patches/pythonpath-is-a-venv.patch
+
     # Patch path to ffmpeg binary
     (replaceVars ./patches/ffmpeg-path.patch {
       ffmpeg = "${lib.getExe ffmpeg-headless}";
+    })
+
+    (fetchpatch {
+      name = "2026.5.4-shelly-tests-fix.patch";
+      url = "https://github.com/home-assistant/core/commit/072e9b51a2321b0d4489bae6f1e04f7ed845222f.patch";
+      includes = [ "tests/components/shelly/test_coordinator.py" ];
+      hash = "sha256-0XQdw2MnwzrHKYY06TotfJJem0bqremmi7k8SyVQVGA=";
+    })
+
+    (fetchpatch {
+      name = "2026.5.4-homewizard-tests-fix.patch";
+      url = "https://github.com/home-assistant/core/commit/e796d9c46744097585bfada483108a55ae16344a.patch";
+      hash = "sha256-T0Nb6LcL/21WdUm8RmczhHaVX92n5O/rpMdpqDVQ2VU=";
     })
   ];
 
@@ -323,7 +346,10 @@ python.pkgs.buildPythonApplication rec {
   ];
 
   dependencies = with python.pkgs; [
-    # Only packages required in pyproject.toml
+    # Mirror what gets installed for Home Assistant Container, which means
+    # installing what is in requirements.txt. The PEP517 specification gets
+    # embedded in wheel metadata but only represents a subset.
+    # Proof: https://github.com/home-assistant/core/blob/2026.5.0/Dockerfile#L40
     aiodns
     aiogithubapi
     aiohasupervisor
@@ -345,23 +371,31 @@ python.pkgs.buildPythonApplication rec {
     cronsim
     cryptography
     fnv-hash-fast
+    ha-ffmpeg
     hass-nabucasa
+    hassil
     home-assistant-bluetooth
+    home-assistant-intents
     httpx
     ifaddr
     infrared-protocols
     jinja2
     lru-dict
+    mutagen
     orjson
     packaging
     pillow
     propcache
     psutil-home-assistant
     pyjwt
+    pymicro-vad
     pyopenssl
+    pyspeex-noise
     python-slugify
+    pyturbojpeg
     pyyaml
     requests
+    rf-protocols
     securetar
     sqlalchemy
     standard-aifc
@@ -414,10 +448,8 @@ python.pkgs.buildPythonApplication rec {
     ])
     ++ lib.concatMap (component: getPackages component python.pkgs) [
       # some components are needed even if tests in tests/components are disabled
-      "assist_pipeline"
       "frontend"
       "hue"
-      "mobile_app"
     ];
 
   pytestFlags = [
@@ -460,7 +492,7 @@ python.pkgs.buildPythonApplication rec {
     export HOME="$TEMPDIR"
     export PYTHONASYNCIODEBUG=1
 
-    # the tests require the existance of a media dir
+    # the tests require the existence of a media dir
     mkdir "$NIX_BUILD_TOP"/media
 
     # put ping binary into PATH, e.g. for wake_on_lan tests

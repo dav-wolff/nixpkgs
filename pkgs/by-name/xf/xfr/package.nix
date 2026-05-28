@@ -9,16 +9,16 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "xfr";
-  version = "0.9.6";
+  version = "0.9.14";
 
   src = fetchFromGitHub {
     owner = "lance0";
     repo = "xfr";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-wYhwDSL9C4rtWgkhaXimk3u03c9UHj2O9eEe8pRlj6c=";
+    hash = "sha256-6+kjpa6zgCXjXK1s3VrOksXFyLAbnqkNOhD50r5zyMA=";
   };
 
-  cargoHash = "sha256-f8m5vFNk62iXyK1Sh3Dda0pV6rUNErymS6QxiCuZ8DA=";
+  cargoHash = "sha256-U/XOlUo/zHsZCPW6lG87BKaM7xSQgineO2rH+JBx6x4=";
 
   nativeBuildInputs = [
     installShellFiles
@@ -42,7 +42,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   meta = {
     description = "Modern iperf3 alternative with a live TUI, multi-client server, and QUIC support.";
     mainProgram = "xfr";
-    homepage = "https://github.com/lance0/xfs";
+    homepage = "https://github.com/lance0/xfr";
     changelog = "https://github.com/lance0/xfr/releases/tag/v${finalAttrs.version}";
     maintainers = with lib.maintainers; [
       _0x4A6F

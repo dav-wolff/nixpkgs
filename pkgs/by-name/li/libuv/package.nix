@@ -24,14 +24,14 @@
 }:
 
 stdenv.mkDerivation (finalAttrs: {
-  version = "1.52.0";
+  version = "1.52.1";
   pname = "libuv";
 
   src = fetchFromGitHub {
     owner = "libuv";
     repo = "libuv";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-WyIBJjxsGo1sSjmbM1zRBF2cR97n6iSBK12FGbg73n0=";
+    hash = "sha256-Y9Nph2LkT1qnOYTW3WCumWWwORnI4P7HxzBjUlGaL7M=";
   };
 
   outputs = [
@@ -130,6 +130,10 @@ stdenv.mkDerivation (finalAttrs: {
         "shutdown_close_pipe"
       ]
       ++ lib.optionals stdenv.hostPlatform.isFreeBSD [
+        # ENETUNREACH when performed in jailed build env
+        "tcp_connect"
+        "udp_connect"
+        "connect_unspecified"
         # EOPNOTSUPP when performed in jailed build env
         "tcp_reuseport"
         "udp_reuseport"

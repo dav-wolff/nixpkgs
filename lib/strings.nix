@@ -360,7 +360,7 @@ rec {
 
     :::
   */
-  concatLines = str: concatStringsSep "\n" str + "\n";
+  concatLines = lines: optionalString (lines != [ ]) (concatStringsSep "\n" lines + "\n");
 
   /**
     Given string `s`, replace every occurrence of the string `from` with the string `to`.

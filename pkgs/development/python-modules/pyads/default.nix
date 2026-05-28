@@ -4,6 +4,7 @@
   adslib,
   buildPythonPackage,
   fetchFromGitHub,
+  nix-update-script,
   pytestCheckHook,
   setuptools,
 }:
@@ -43,7 +44,20 @@ buildPythonPackage rec {
   # Test suite has port reuse races and UDP timing issues on darwin
   doCheck = !stdenv.hostPlatform.isDarwin;
 
+  disabledTests = [
+    # Race over UDP 48899 (no SO_REUSEADDR), occasionally segfaulting on shutdown
+    "test_correct_route"
+    "test_get_ams"
+  ];
+
   pythonImportsCheck = [ "pyads" ];
+
+  passthru.updateScript = nix-update-script {
+    extraArgs = [
+      "--version-regex"
+      "^(\\d+\\.\\d+\\.\\d+)$"
+    ];
+  };
 
   meta = {
     description = "Python wrapper for TwinCAT ADS library";

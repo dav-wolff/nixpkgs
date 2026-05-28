@@ -77,10 +77,13 @@ buildPythonPackage {
 
   meta = {
     description = "Utilities to facilitate the installation of Python packages";
-    homepage = "https://pypi.python.org/pypi/setuptools";
+    homepage = "https://pypi.org/project/setuptools/";
     license = with lib.licenses; [
       psfl
       zpl20
+    ];
+    knownVulnerabilities = [
+      "CVE-2025-47273"
     ];
     platforms = python.meta.platforms;
     priority = 10;

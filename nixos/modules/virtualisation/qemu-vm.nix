@@ -399,7 +399,6 @@ in
   imports = [
     ../profiles/qemu-guest.nix
     ./disk-size-option.nix
-    ./guest-networking-options.nix
     (mkRenamedOptionModule
       [
         "virtualisation"
@@ -1362,7 +1361,7 @@ in
             + "${guest.address}:${toString guest.port},"
           else
             "'guestfwd=${proto}:${guest.address}:${toString guest.port}-"
-            + "cmd:${pkgs.netcat}/bin/nc ${host.address} ${toString host.port}',"
+            + "cmd:${hostPkgs.netcat}/bin/nc ${host.address} ${toString host.port}',"
         );
         restrictNetworkOption = lib.optionalString cfg.restrictNetwork "restrict=on,";
       in

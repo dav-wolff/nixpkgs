@@ -1,4 +1,4 @@
-{ callPackage }:
+{ callPackage, runCommand }:
 let
   src = callPackage ./src.nix { };
 in
@@ -51,7 +51,16 @@ rec {
     done
   '';
 
-  extraPrefsFiles = [ "${source}/settings/librewolf.cfg" ];
+  localSettingsPrefs = runCommand "local-settings.js" { } ''
+    # Import of `librewolf.cfg` file is already being done manually.
+    substitute ${source}/settings/defaults/pref/local-settings.js $out \
+      --replace-fail 'pref("general.config.filename", "librewolf.cfg");' ""
+  '';
+
+  extraPrefsFiles = [
+    "${source}/settings/librewolf.cfg"
+    localSettingsPrefs
+  ];
 
   extraPoliciesFiles = [ "${source}/settings/distribution/policies.json" ];
 
