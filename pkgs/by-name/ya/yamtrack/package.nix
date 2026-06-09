@@ -1,6 +1,6 @@
 {
   lib,
-  stdenv,
+  stdenvNoCC,
   python3,
   fetchFromGitHub,
   makeWrapper,
@@ -47,7 +47,7 @@ let
     ++ redis.optional-dependencies.hiredis
   );
 in
-stdenv.mkDerivation (finalAttrs: {
+stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "yamtrack";
   version = "0.25.3";
   src = fetchFromGitHub {

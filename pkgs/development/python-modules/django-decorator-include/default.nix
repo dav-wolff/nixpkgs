@@ -12,7 +12,7 @@ buildPythonPackage (finalAttrs: {
   src = fetchFromGitHub {
     owner = "twidi";
     repo = "django-decorator-include";
-    tag = "${finalAttrs.version}";
+    tag = finalAttrs.version;
     hash = "sha256-lW/QdM9IPOrCLPPXrx4waBUaYi1OkM5Vd2uH8PZdWbs=";
   };
   pyproject = true;

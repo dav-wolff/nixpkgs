@@ -27,7 +27,7 @@ let
 in
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "amp-cli";
-  version = "0.0.1779094967-g3f6594";
+  version = "0.0.1780564400-g2007df";
 
   src = finalAttrs.passthru.sources.${stdenvNoCC.hostPlatform.system};
 
@@ -56,8 +56,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     runHook postInstall
   '';
 
-  postPhases = lib.optionals stdenvNoCC.hostPlatform.isDarwin [ "postPatchelf" ];
-  postPatchelf = lib.optionalString stdenvNoCC.hostPlatform.isDarwin ''
+  postInstall = lib.optionalString stdenvNoCC.hostPlatform.isDarwin ''
     '${lib.getExe' cctools "${cctools.targetPrefix}install_name_tool"}' $out/libexec/amp-cli/amp \
       -change /usr/lib/libicucore.A.dylib '${lib.getLib darwin.ICU}/lib/libicucore.A.dylib'
     '${lib.getExe rcodesign}' sign --code-signature-flags linker-signed $out/libexec/amp-cli/amp
@@ -79,10 +78,10 @@ stdenvNoCC.mkDerivation (finalAttrs: {
         url = "https://static.ampcode.com/cli/${finalAttrs.version}/amp-${platform}.gz";
         hash =
           {
-            x86_64-linux = "sha256-ZBqt8UWDY0SlYOOrJZib+UXdZ1cQxyRNp3T7fr+gcNs=";
-            aarch64-linux = "sha256-qztHMb4EJBOuEQh0OZ33dqx/MUy5LEPgLry6h+rmwVo=";
-            x86_64-darwin = "sha256-meedgFtc+DA4NoR0XJuLSX/gmiMKCZLACfPBbk6wfLk=";
-            aarch64-darwin = "sha256-0v3yM9zQ6ToWBHyPvrmPTP0lfPb1tCoAd6eNgHs3ZkM=";
+            x86_64-linux = "sha256-7hUa1Qs1pNH2+31rrc9T99eDQ9Vq+CSwxROISyPqogY=";
+            aarch64-linux = "sha256-ThT2J1YBoZM5+YanRbL40GyxYQtK/xyDqac8fv0gfZs=";
+            x86_64-darwin = "sha256-VnuMqXVzqge5jgduxB+woYLVZkFtu92MEsEsrh4tJgE=";
+            aarch64-darwin = "sha256-gYAI+eQitglQTBtuilHkHKd8rsYsJ7s2QKoFQR85l6o=";
           }
           .${system'};
       }

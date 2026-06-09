@@ -61,6 +61,12 @@ Release branch. Used to specify that a package is not going to receive updates t
 
 The package’s homepage. Example: `https://www.gnu.org/software/hello/manual/`
 
+### `donationPage` {#var-meta-donationPage}
+
+The package or project's donation page, if it exists. Example: `https://neovim.io/sponsors/`
+
+Authoritative project URLs are preferred.
+
 ### `downloadPage` {#var-meta-downloadPage}
 
 The page where a link to the current version can be found. Example: `https://ftp.gnu.org/gnu/hello/`
@@ -71,7 +77,7 @@ A link or a list of links to the location of Changelog for a package. A link may
 
 ### `license` {#var-meta-license}
 
-The license, or licenses, for the package. One from the attribute set defined in [`nixpkgs/lib/licenses.nix`](https://github.com/NixOS/nixpkgs/blob/master/lib/licenses.nix). At this moment using both a list of licenses and a single license is valid. If the license field is in the form of a list representation, then it means that parts of the package are licensed differently. Each license should preferably be referenced by their attribute. The non-list attribute value can also be a space delimited string representation of the contained attribute `shortNames` or `spdxIds`. The following are all valid examples:
+The license, or licenses, for the package. One from the attribute set defined in [`nixpkgs/lib/licenses/licenses.nix`](https://github.com/NixOS/nixpkgs/blob/master/lib/licenses/licenses.nix). At this moment using both a list of licenses and a single license is valid. If the license field is in the form of a list representation, then it means that parts of the package are licensed differently. Each license should preferably be referenced by their attribute. The non-list attribute value can also be a space delimited string representation of the contained attribute `shortNames` or `spdxIds`. The following are all valid examples:
 
 - Single license referenced by attribute (preferred) `lib.licenses.gpl3Only`.
 - Single license referenced by its attribute shortName (frowned upon) `"gpl3Only"`.
@@ -151,6 +157,8 @@ The list of Nix platform types for which the [Hydra](https://github.com/nixos/hy
 }
 ```
 
+Note that this does not affect whether reverse dependencies of the package are built on Hydra.
+
 ### `broken` {#var-meta-broken}
 
 If set to `true`, the package is marked as "broken", meaning that it won’t show up in [search.nixos.org](https://search.nixos.org/packages), and cannot be built or installed unless [explicitly allowed](#sec-allow-broken).
@@ -208,7 +216,7 @@ If this list is not empty, the package is marked as "insecure", meaning that it 
 
 ## Licenses {#sec-meta-license}
 
-The `meta.license` attribute should preferably contain a value from `lib.licenses` defined in [`nixpkgs/lib/licenses.nix`](https://github.com/NixOS/nixpkgs/blob/master/lib/licenses.nix), or in-place license description of the same format if the license is unlikely to be useful in another expression.
+The `meta.license` attribute should preferably contain a value from `lib.licenses` defined in [`nixpkgs/lib/licenses/licenses.nix`](https://github.com/NixOS/nixpkgs/blob/master/lib/licenses/licenses.nix), or in-place license description of the same format if the license is unlikely to be useful in another expression.
 
 Although it’s typically better to indicate the specific license, a few generic options are available:
 

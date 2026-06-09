@@ -125,9 +125,9 @@
 
   azure-devops = mkAzExtension rec {
     pname = "azure-devops";
-    version = "1.0.3";
+    version = "1.0.4";
     url = "https://github.com/Azure/azure-cli-extensions/releases/download/azure-devops-${version}/azure_devops-${version}-py2.py3-none-any.whl";
-    hash = "sha256-CbBskqfEktpW+ziRkdZO0kCW70FJ+vaBQjEn66nOCXM=";
+    hash = "sha256-MYW8CnDfBnBi/dfOgSsI+yT605M8uSxvfjEkEdqYVSo=";
     description = "Tools for managing Azure DevOps";
     propagatedBuildInputs = with python3Packages; [ distro ];
     meta.maintainers = with lib.maintainers; [ katexochen ];
@@ -330,9 +330,9 @@
 
   storage-preview = mkAzExtension rec {
     pname = "storage-preview";
-    version = "1.0.0b7";
+    version = "1.0.0b8";
     url = "https://azcliprod.blob.core.windows.net/cli-extensions/storage_preview-${version}-py2.py3-none-any.whl";
-    hash = "sha256-wtf+4TBDzpWO55w5VXnoERAbksP2QaSc29FHL3MNOBo=";
+    hash = "sha256-qgDslmBX/XJA5nn95hJJb06vMC3izdbz7qlmQpx74T8=";
     description = "Provides a preview for upcoming storage features";
     propagatedBuildInputs = with python3Packages; [ azure-core ];
     meta.maintainers = with lib.maintainers; [ katexochen ];
