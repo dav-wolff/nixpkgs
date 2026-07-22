@@ -127,7 +127,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     description = "Self hosted media tracker";
     mainProgram = "yamtrack";
     homepage = "https://github.com/FuzzyGrim/Yamtrack";
-    changelog = "https://github.com/FuzzyGrim/Yamtrack/releases/tag/v${finalAttrs.version}";
+    changelog = "https://github.com/FuzzyGrim/Yamtrack/releases/tag/${finalAttrs.src.tag}";
     license = with lib.licenses; [ agpl3Only ];
     maintainers = with lib.maintainers; [ dav-wolff ];
   };
