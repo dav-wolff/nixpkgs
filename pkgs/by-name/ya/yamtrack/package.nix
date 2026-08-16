@@ -11,7 +11,7 @@ let
     ps:
     with ps;
     [
-      # https://github.com/FuzzyGrim/Yamtrack/blob/v0.25.1/requirements.txt
+      # https://github.com/FuzzyGrim/Yamtrack/blob/v0.26.1/pyproject.toml
       aiohttp
       apprise
       beautifulsoup4
@@ -49,12 +49,12 @@ let
 in
 stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "yamtrack";
-  version = "0.25.3";
+  version = "0.26.1";
   src = fetchFromGitHub {
     owner = "FuzzyGrim";
     repo = "Yamtrack";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-6XuV0+2Metrxngkhhbx10Km6s0zWYT0ilrLAwTC7j3c=";
+    hash = "sha256-9eJHlW+s+9VIKicPCrgHyUtlOqbEDm/LFm0p9iOPc8w=";
   };
 
   strictDeps = true;

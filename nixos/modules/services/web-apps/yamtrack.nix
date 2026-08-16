@@ -35,8 +35,8 @@ in
       '';
       default = { };
       example = {
-        REGISTRATION = false;
-        ADMIN_ENABLED = true;
+        REGISTRATION = "False";
+        ADMIN_ENABLED = "True";
       };
     };
     environmentFile = mkOption {

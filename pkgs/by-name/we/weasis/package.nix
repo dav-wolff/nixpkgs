@@ -20,7 +20,6 @@ let
   platform = selectSystem {
     "x86_64-linux" = "linux-x86-64";
     "aarch64-linux" = "linux-aarch64";
-    "x86_64-darwin" = "macosx-x86-64";
     "aarch64-darwin" = "macosx-aarch64";
   };
 
@@ -33,12 +32,12 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "weasis";
-  version = "4.6.6";
+  version = "4.7.2";
 
   # Their build instructions indicate to use the packaging script
   src = fetchzip {
     url = "https://github.com/nroduit/Weasis/releases/download/v${finalAttrs.version}/weasis-native.zip";
-    hash = "sha256-aOjYD+74yYp0+lIZpekToc6IvygJVAPyJmUsESl3gkI=";
+    hash = "sha256-PxU6la1zjLvk6ghLGru4hRYD/D+XsfiTjj00i5Gjzb4=";
     stripRoot = false;
   };
 

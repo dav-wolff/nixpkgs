@@ -7,16 +7,15 @@
   versionCheckHook,
   nix-update-script,
 }:
-
 buildGoModule (finalAttrs: {
   pname = "databricks-cli";
-  version = "1.1.0";
+  version = "1.11.0";
 
   src = fetchFromGitHub {
     owner = "databricks";
     repo = "cli";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-MMVwypMxnFBYVlBmuJ2KWwfL1hXuro5BH7V5wrgl3lc=";
+    hash = "sha256-ViMRqQ9lfek1ETCW30NDmIlG5dtPDmNv4F1EeDwlk6k=";
   };
 
   # Otherwise these tests fail asserting that the version is 0.0.0-dev
@@ -25,24 +24,18 @@ buildGoModule (finalAttrs: {
       --replace-fail "cli/0.0.0-dev" "cli/${finalAttrs.version}"
   '';
 
-  vendorHash = "sha256-OK7P+0pBaL/sn+iTrVr0m3EuqA/Pssp19JRKo6nGipk=";
+  vendorHash = "sha256-LjU4cWFiCrmNwRFt9rAFDQhRw1fN2lLK03/z7wTr+E4=";
 
-  excludedPackages = [
-    "bundle/internal"
-    "acceptance"
-    "integration"
-    "tools/testrunner"
-    "tools/testmask"
-    "cmd/auth"
-    "cmd/root"
-    "cmd/labs/project"
-    "libs/auth"
-    "libs/databrickscfg"
-    "libs/hostmetadata"
-  ];
+  subPackages = [ "." ];
 
   ldflags = [
     "-X github.com/databricks/cli/internal/build.buildVersion=${finalAttrs.version}"
+    "-X github.com/databricks/cli/internal/build.buildTag=v${finalAttrs.version}"
+    "-X github.com/databricks/cli/internal/build.buildSummary=v${finalAttrs.version}"
+    "-X github.com/databricks/cli/internal/build.buildMajor=${lib.versions.major finalAttrs.version}"
+    "-X github.com/databricks/cli/internal/build.buildMinor=${lib.versions.minor finalAttrs.version}"
+    "-X github.com/databricks/cli/internal/build.buildPatch=${lib.versions.patch finalAttrs.version}"
+    "-X github.com/databricks/cli/internal/build.buildIsSnapshot=false"
   ];
 
   postBuild = ''

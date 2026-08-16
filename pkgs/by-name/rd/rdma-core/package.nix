@@ -2,6 +2,7 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  gitUpdater,
   cmake,
   pkg-config,
   docutils,
@@ -15,13 +16,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "rdma-core";
-  version = "62.0";
+  version = "64.0";
 
   src = fetchFromGitHub {
     owner = "linux-rdma";
     repo = "rdma-core";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-1n33KH8HTyZ0jHtDanopxwABiLjAvt+V7lgaeabJs8s=";
+    hash = "sha256-Y0pCGkvCjZ1F9Ojouesozn2Lxj+x7/0ck6/9tJmdkWw=";
   };
 
   strictDeps = true;
@@ -50,6 +51,7 @@ stdenv.mkDerivation (finalAttrs: {
   cmakeFlags = [
     "-DCMAKE_INSTALL_RUNDIR=/run"
     "-DCMAKE_INSTALL_SHAREDSTATEDIR=/var/lib"
+    "-DSYSUSERS_DIR=${placeholder "out"}/lib/sysusers.d"
   ];
 
   postPatch = ''
@@ -72,6 +74,10 @@ stdenv.mkDerivation (finalAttrs: {
   '';
 
   doInstallCheck = true;
+
+  passthru.updateScript = gitUpdater {
+    rev-prefix = "v";
+  };
 
   meta = {
     description = "RDMA Core Userspace Libraries and Daemons";

@@ -41,22 +41,22 @@ rustPlatform.buildRustPackage (
   in
   {
     pname = "chiri";
-    version = "0.9.1";
+    version = "1.0.0";
 
     src = fetchFromGitHub {
       owner = "chiriapp";
       repo = "chiri";
       tag = "app-v${finalAttrs.version}";
-      hash = "sha256-rkkyp36EIfvD0DXq0Tn+uLS/cBtgGk4x4sVkppTDaLg=";
+      hash = "sha256-ASmDHMlp+jNA/8uJ78SLv/2plG41KYkKdel2WpMGwq8=";
     };
 
-    cargoHash = "sha256-nSK4oyaW+chFHKrCI80d9785UsqBlX8YAdU26b/aa0s=";
+    cargoHash = "sha256-BeEpTFKWr81vNBUhHOnfrJ/yNgpZGDExnaxvIbwkBMs=";
 
     pnpmDeps = fetchPnpmDeps {
       inherit (finalAttrs) pname version src;
       pnpm = pnpm-patched;
-      hash = "sha256-dxfoo5Ajjt7zUsdQojXhePHp0K2itpdjequvGqqnZ7k=";
-      fetcherVersion = 3;
+      hash = "sha256-IQgYbkGsPC0TbqcDxhOgVWFmpxprCCwrQI7QJx4IpAc=";
+      fetcherVersion = 4;
     };
 
     nativeBuildInputs = [

@@ -150,6 +150,11 @@ let
           tag = version;
           hash = "sha256-NwGGNN6LC3gvE8zoVL5meNWMbqZjJ+6PcU2ebJTfJmU=";
         };
+
+        # ancient pinned version requires pkg_resources
+        nativeBuildInputs = oldAttrs.nativeBuildInputs ++ [
+          self.setuptools_80
+        ];
       });
 
       # Pinned due to API changes in 0.1.0
@@ -265,7 +270,7 @@ let
   extraBuildInputs = extraPackages python3Packages;
 
   # Don't forget to run update-component-packages.py after updating
-  hassVersion = "2026.6.1";
+  hassVersion = "2026.8.2";
 
 in
 python3Packages.buildPythonApplication rec {
@@ -286,13 +291,13 @@ python3Packages.buildPythonApplication rec {
     owner = "home-assistant";
     repo = "core";
     tag = version;
-    hash = "sha256-gjXhWv64Uu3LHwxDR8HwsTFeAncgY94JeOqfKEnvgJ8=";
+    hash = "sha256-u8vXAsO1jQpUpvqSRuYMOR8eY0Oqk7T4A/aRneE88Qg=";
   };
 
   # Secondary source is pypi sdist for translations
   sdist = fetchPypi {
     inherit pname version;
-    hash = "sha256-gtnIsOrJWyLhjEc9dstvRiVd4LrqJ6W48qXNwaV8YlU=";
+    hash = "sha256-ImLh7LxH/p08y2kPmfFxdp+vUgFyCLf/Zsnbv79w990=";
   };
 
   build-system = with python3Packages; [
@@ -331,6 +336,10 @@ python3Packages.buildPythonApplication rec {
 
     substituteInPlace pyproject.toml \
       --replace-fail "setuptools==78.1.1" setuptools
+
+    # https://github.com/RenierM26/pyEzvizApi/commit/ae0651ea93f031e94e7286fa3439fcc12acfb001
+    substituteInPlace homeassistant/components/ezviz/switch.py \
+      --replace-fail "SupportFulldayRecord" "SupportFullDayRecord"
   '';
 
   pythonRemoveDeps = [
@@ -440,6 +449,10 @@ python3Packages.buildPythonApplication rec {
       colorlog
       # Used in tests/helpers/test_httpx_client.py
       h2
+      # Used in tests/mypy_plugins/test_enum_identity_compare.py
+      mypy
+      # Used in tests/scripts/check_requirements/test_gate.py
+      pygithub
     ])
     ++ lib.concatMap (component: getPackages component python3Packages) [
       # some components are needed even if tests in tests/components are disabled

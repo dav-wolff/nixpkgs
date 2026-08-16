@@ -35,14 +35,13 @@ let
     cmakeBool
     cmakeFeature
     optionals
-    optionalString
     ;
 
   effectiveStdenv = if cudaSupport then cudaPackages.backendStdenv else stdenv;
 in
 effectiveStdenv.mkDerivation (finalAttrs: {
   pname = "stable-diffusion-cpp";
-  version = "master-652-92dc726";
+  version = "master-820-de298c2";
 
   outputs = [
     "out"
@@ -52,8 +51,8 @@ effectiveStdenv.mkDerivation (finalAttrs: {
   src = fetchFromGitHub {
     owner = "leejet";
     repo = "stable-diffusion.cpp";
-    rev = "master-652-92dc726";
-    hash = "sha256-Gk8y2ZvEQHO+p/l4nuioErARYqfLH6qbDwlmS5RXVI4=";
+    tag = finalAttrs.version;
+    hash = "sha256-pUrTZSVWGJLwTk/I8t6xAjB08PXuedAnPfrh1hDXV5A=";
     fetchSubmodules = true;
   };
 
@@ -71,7 +70,7 @@ effectiveStdenv.mkDerivation (finalAttrs: {
     (optionals cudaSupport (
       with cudaPackages;
       [
-        cuda_cccl
+        cccl
         cuda_cudart
         libcublas
       ]
@@ -122,6 +121,7 @@ effectiveStdenv.mkDerivation (finalAttrs: {
     mainProgram = "sd";
     maintainers = with lib.maintainers; [
       adriangl
+      jk
     ];
     platforms = lib.platforms.unix;
     badPlatforms = lib.optionals (cudaSupport || openclSupport) lib.platforms.darwin;
