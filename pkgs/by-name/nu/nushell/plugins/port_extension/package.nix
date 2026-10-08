@@ -7,16 +7,16 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "nu_plugin_port_extension";
-  version = "0.115.0";
+  version = "0.116.0";
 
   src = fetchFromGitHub {
     owner = "fmotalleb";
     repo = "nu_plugin_port_extension";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-J+IWBiRQBwJSraSYY3wtSH+iCLebw57Z92T+iUlkHfQ=";
+    hash = "sha256-MIFfkhzvKkMiX1OecJozGkk9oBWchMyE8bmuUhEnIMk=";
   };
 
-  cargoHash = "sha256-r3EoXsPnn6JmyYjfh1Cs6HtuQSb2ZLg3UnWHFQLobBM=";
+  cargoHash = "sha256-BTmH0SZNXDhgAnfnIDLW5DjE9mq9OjU7eCaTUSQH2dI=";
 
   passthru.update-script = nix-update-script { };
 
