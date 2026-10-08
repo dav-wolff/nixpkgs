@@ -19,14 +19,17 @@
 }:
 
 stdenv.mkDerivation (finalAttrs: {
-  version = "1.18.2";
+  version = "1.18.3";
   pname = "chafa";
+
+  __structuredAttrs = true;
+  strictDeps = true;
 
   src = fetchFromGitHub {
     owner = "hpjansson";
     repo = "chafa";
     tag = finalAttrs.version;
-    hash = "sha256-M4TTLpaIV7H3aLj7/C7FHT0GNCxN9SRZ81FtxuWNzjo=";
+    hash = "sha256-lMpofiJ6Hhxqna5OMWAG4tp7i2O/RZcimyaZsYsGu+c=";
   };
 
   outputs = [
@@ -59,7 +62,7 @@ stdenv.mkDerivation (finalAttrs: {
   patches = [ ./xmlcatalog_patch.patch ];
 
   preConfigure = ''
-    substituteInPlace ./autogen.sh --replace pkg-config '$PKG_CONFIG'
+    substituteInPlace ./autogen.sh --replace-fail pkg-config '$PKG_CONFIG'
     NOCONFIGURE=1 ./autogen.sh
   '';
 

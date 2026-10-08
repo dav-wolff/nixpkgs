@@ -161,14 +161,12 @@ let
             (with final; isWindows && isAarch64);
 
         # Use the split GCC package set (`gccNGPackages`) instead of the
-        # monolithic `gcc`. No platform selects it yet; it is opt-in, set
-        # explicitly on a platform spec, so that the split set can be exercised
-        # before anything depends on it.
+        # monolithic `gcc`.
         #
-        # I (@Ericson2314) plan on making obscure low-tier platforms (e.g.
-        # NetBSD) use it soon, so we can dogfood GCC NG and thereby iron out its
-        # bugs.
-        useGccNG = false;
+        # I (@Ericson2314) plan on making more obscure low-tier
+        # platforms (e.g. NetBSD) use it soon, so we can dogfood GCC NG
+        # and thereby iron out its bugs.
+        useGccNG = final.isCygwin;
 
         libc =
           if final.isDarwin then
@@ -720,6 +718,26 @@ let
               "iOS"
             else
               null;
+        };
+        swift = {
+          arch = final.uname.processor;
+          platform =
+            if final.isMacOS then
+              "macosx"
+            else if final.isiOS then
+              "iphoneos"
+            else if final.isLinux then
+              "linux"
+            else if final.isWindows then
+              "windows"
+            else
+              null;
+          triple =
+            if final.isDarwin then
+              # FIXME: Can this be done a better way?
+              "${final.swift.arch}-${final.parsed.vendor.name}-${final.swift.platform}${final.darwinMinVersion}"
+            else
+              final.config;
         };
       };
     in

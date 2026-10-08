@@ -56,6 +56,7 @@
   cargo,
   rustc,
   nix-update-script,
+  withBreakingChanges ? false,
 }:
 
 assert osxkeychainSupport -> stdenv.hostPlatform.isDarwin;
@@ -85,6 +86,11 @@ let
     NetSSLeay
     AuthenSASL
     DigestHMAC
+  ];
+  gitJumpBinPath = lib.makeBinPath [
+    "$out"
+    perlPackages.perl
+    coreutils
   ];
 in
 
@@ -132,6 +138,12 @@ stdenv.mkDerivation (finalAttrs: {
       name = "t7703-ignore-ls-total.patch";
       url = "https://lore.kernel.org/git/20260504101429.340123-1-joerg@thalheim.io/raw";
       hash = "sha256-44EPfEJ39LjPWjqjFb52EKNaJGzYxZzJaJOis8QnazU=";
+    })
+    # Fix fortify darwin crashes when dealing with unicode filenames.
+    (fetchurl {
+      name = "darwin-unicode-filename-fix.patch";
+      url = "https://lore.kernel.org/git/20260704233724.16928-1-ihar.hrachyshka@gmail.com/raw";
+      hash = "sha256-lpGz3nFKQvFDtW2TtQLx/684ECJVBLGPGqip0XEtOdU=";
     })
   ]
   ++ lib.optionals withSsh [
@@ -191,6 +203,7 @@ stdenv.mkDerivation (finalAttrs: {
     (if stdenv.hostPlatform.isFreeBSD then libiconvReal else libiconv)
     bash
   ]
+  ++ lib.optionals pythonSupport [ python3 ]
   ++ lib.optionals perlSupport [ perlPackages.perl ]
   ++ lib.optionals guiSupport [
     tcl
@@ -206,6 +219,8 @@ stdenv.mkDerivation (finalAttrs: {
   depsBuildBuild = lib.optionals (stdenv.buildPlatform != stdenv.hostPlatform) [
     buildPackages.stdenv.cc
   ];
+
+  strictDeps = true;
 
   env = {
     # required to support pthread_cancel()
@@ -228,7 +243,7 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   preBuild = ''
-    makeFlagsArray+=( perllibdir=$out/$(perl -MConfig -wle 'print substr $Config{installsitelib}, 1 + length $Config{siteprefixexp}') )
+    makeFlags+=( perllibdir=$out/$(perl -MConfig -wle 'print substr $Config{installsitelib}, 1 + length $Config{siteprefixexp}') )
   '';
 
   makeFlags = [
@@ -261,7 +276,8 @@ stdenv.mkDerivation (finalAttrs: {
   # See https://github.com/Homebrew/homebrew-core/commit/dfa3ccf1e7d3901e371b5140b935839ba9d8b706
   ++ lib.optional stdenv.hostPlatform.isDarwin "TKFRAMEWORK=/nonexistent"
   # Starting with future Git version 3.0.0, rust will be mandatory. For now, it's optional.
-  ++ lib.optional (!rustSupport) "NO_RUST=YesPlease";
+  ++ lib.optional (!rustSupport) "NO_RUST=YesPlease"
+  ++ lib.optional withBreakingChanges "WITH_BREAKING_CHANGES=YesPlease";
 
   disallowedReferences = lib.optionals (stdenv.buildPlatform != stdenv.hostPlatform) [
     stdenv.shellPackage
@@ -274,7 +290,7 @@ stdenv.mkDerivation (finalAttrs: {
         ''${enableParallelBuilding:+-j''${NIX_BUILD_CORES}}
         SHELL="$SHELL"
     )
-    concatTo flagsArray makeFlags makeFlagsArray buildFlags buildFlagsArray
+    concatTo flagsArray makeFlags buildFlags
     echoCmd 'build flags' "''${flagsArray[@]}"
   ''
   + lib.optionalString withManual ''
@@ -335,7 +351,7 @@ stdenv.mkDerivation (finalAttrs: {
         ''${enableParallelInstalling:+-j''${NIX_BUILD_CORES}}
         SHELL="$SHELL"
     )
-    concatTo flagsArray makeFlags makeFlagsArray installFlags installFlagsArray
+    concatTo flagsArray makeFlags installFlags
     echoCmd 'install flags' "''${flagsArray[@]}"
 
     # Install git-subtree.
@@ -377,9 +393,11 @@ stdenv.mkDerivation (finalAttrs: {
     # Also put git-http-backend into $PATH, so that we can use smart
     # HTTP(s) transports for pushing
     ln -s $out/libexec/git-core/git-http-backend${stdenv.hostPlatform.extensions.executable} $out/bin/git-http-backend
-    ln -s $out/share/git/contrib/git-jump/git-jump $out/bin/git-jump
   ''
   + lib.optionalString perlSupport ''
+    makeWrapper $out/share/git/contrib/git-jump/git-jump $out/bin/git-jump \
+      --prefix PATH : "${gitJumpBinPath}"
+
     # wrap perl commands
     makeWrapper "$out/share/git/contrib/credential/netrc/git-credential-netrc.perl" $out/libexec/git-core/git-credential-netrc \
                 --set PERL5LIB   "$out/${perlPackages.perl.libPrefix}:${perlPackages.makePerlPath perlLibs}"
@@ -404,6 +422,10 @@ stdenv.mkDerivation (finalAttrs: {
         sed -i -e "/use CGI /i use lib \"$p/${perlPackages.perl.libPrefix}\";" \
             "$out/share/gitweb/gitweb.cgi"
     done
+  ''
+
+  + lib.optionalString pythonSupport ''
+    patchShebangs $out/share/git/contrib/fast-import/import-zips.py
   ''
 
   + (
@@ -478,7 +500,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   installCheckTarget = "test";
 
-  # see also installCheckFlagsArray
+  # see also installCheckFlags in preInstallCheck
   installCheckFlags = [
     "DEFAULT_TEST_TARGET=prove"
     "PERL_PATH=${buildPackages.perl}/bin/perl"
@@ -502,7 +524,7 @@ stdenv.mkDerivation (finalAttrs: {
       NIX_BUILD_CORES=32
     fi
 
-    installCheckFlagsArray+=(
+    installCheckFlags+=(
       GIT_PROVE_OPTS="--jobs $NIX_BUILD_CORES --failures --state=failed,save"
       GIT_TEST_INSTALLED=$out/bin
       ${lib.optionalString (!svnSupport) "NO_SVN_TESTS=y"}

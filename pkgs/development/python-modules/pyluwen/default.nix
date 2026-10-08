@@ -9,7 +9,7 @@
 }:
 buildPythonPackage (finalAttrs: {
   pname = "pyluwen";
-  version = "0.8.5";
+  version = "0.10.0";
   pyproject = true;
   __structuredAttrs = true;
 
@@ -17,12 +17,12 @@ buildPythonPackage (finalAttrs: {
     owner = "tenstorrent";
     repo = "luwen";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-lY7cZ+8C0UEGGYxufl4Vi8g0L4AJFXaGqn7XE2ivTcQ=";
+    hash = "sha256-J0SvCBsDi3GMvnwqgqGMUDvrSO+baznDhsfuvF44Ens=";
   };
 
   cargoDeps = rustPlatform.fetchCargoVendor {
     inherit (finalAttrs) pname version src;
-    hash = "sha256-QBGXbRiBk4WIQFopq1OccmUHgx5GzR/PKhMH4Ie+fyg=";
+    hash = "sha256-vEuVxBGIJAyc8POy3EPTzTK5g5SE3QDZcnTnAb3b5k0=";
   };
 
   sourceRoot = "${finalAttrs.src.name}/bind/pyluwen";

@@ -21,14 +21,14 @@
 
 python3Packages.buildPythonApplication (finalAttrs: {
   pname = "sc-controller";
-  version = "0.6.2";
+  version = "0.7.2";
   format = "setuptools";
 
   src = fetchFromGitHub {
     owner = "C0rn3j";
     repo = "sc-controller";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-jQcp3c3S6G6GrU6j0m5Re9S28eLGJxmvD81dOuHFCz8=";
+    hash = "sha256-Sp7sds+FoAOaSCwJuTxCijO5ZIU4JXhL47MGbAf/k1s=";
   };
 
   nativeBuildInputs = [

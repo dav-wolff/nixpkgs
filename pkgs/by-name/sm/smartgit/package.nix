@@ -17,13 +17,13 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "smartgit";
-  version = "26.1.050";
+  version = "26.1.055";
 
   src = fetchurl {
     url = "https://download.smartgit.dev/smartgit/smartgit-${
       builtins.replaceStrings [ "." ] [ "_" ] finalAttrs.version
     }-no-git-linux-amd64.tar.gz";
-    hash = "sha256-qPScqvGvbUv1soSvM0qKHJBKsvVpOSKXscOriVm+HI4=";
+    hash = "sha256-NuFVvWqtFS/8EYa5+oNwo3IJfPlG+wqI6A4e7l8ZzeI=";
   };
 
   nativeBuildInputs = [ wrapGAppsHook3 ];
@@ -109,7 +109,10 @@ stdenv.mkDerivation (finalAttrs: {
     changelog = "https://www.smartgit.dev/changelogs/changelog-${lib.versions.majorMinor finalAttrs.version}.txt";
     license = lib.licenses.unfree;
     mainProgram = "smartgit";
-    platforms = [ "x86_64-linux" ];
+    platforms = [
+      "aarch64-linux"
+      "x86_64-linux"
+    ];
     maintainers = with lib.maintainers; [
       jraygauthier
       tmssngr

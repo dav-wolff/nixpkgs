@@ -41,14 +41,14 @@
 
 buildPythonPackage rec {
   pname = "django-allauth";
-  version = "65.19.0";
+  version = "65.19.7";
   pyproject = true;
 
   src = fetchFromCodeberg {
     owner = "allauth";
     repo = "django-allauth";
     tag = version;
-    hash = "sha256-G34e0mz+VzLjsihuDUiP8zHEq7GFN99XStU9u3Ti0v0=";
+    hash = "sha256-AqwlJZQz9uzsQtQBTZq3F9RSyUVX1p5EWBbfonzMK+s=";
   };
 
   nativeBuildInputs = [ gettext ];

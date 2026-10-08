@@ -3,20 +3,23 @@
   stdenv,
   fetchFromGitHub,
   fetchPnpmDeps,
-  pnpm,
+  pnpm_11,
   pnpmConfigHook,
   nodejs,
   rustPlatform,
   protobuf,
   cacert,
-  tzdata,
+  nix-update,
   nixosTests,
+  writeShellApplication,
 }:
 
 let
+  pnpm = pnpm_11;
+
   console = stdenv.mkDerivation (finalAttrs: {
     pname = "rustfs-console";
-    version = "0.1.20";
+    version = "0.1.34";
     __structuredAttrs = true;
     __darwinAllowLocalNetworking = true;
 
@@ -24,13 +27,14 @@ let
       owner = "rustfs";
       repo = "console";
       tag = "v${finalAttrs.version}";
-      hash = "sha256-EUyjYPDkHmD8RRmusFnWsWiKbRRSzZ0c4pbMr+2PJdE=";
+      hash = "sha256-YAgdW8X3ioChFuGvP0zwwy3oHacWEcK85URu4TMBznM=";
     };
 
     pnpmDeps = fetchPnpmDeps {
       inherit (finalAttrs) pname version src;
+      inherit pnpm;
       fetcherVersion = 4;
-      hash = "sha256-ox4hKm3f4QVpxfx4g0uNDRY7w6O3L3AVz2nmHhs8UHM=";
+      hash = "sha256-wfaUMWTa8eFkzY/wCD5o7+G2OiSTWCqm+py3sgqDI04=";
     };
 
     nativeBuildInputs = [
@@ -50,55 +54,64 @@ let
     '';
   });
 in
-rustPlatform.buildRustPackage rec {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "rustfs";
-  version = "1.0.0-rc.1";
+  version = "1.0.1";
   __structuredAttrs = true;
 
   src = fetchFromGitHub {
     owner = "rustfs";
     repo = "rustfs";
-    tag = version;
-    hash = "sha256-iVAIsq/SAabdBjnNYLF7oQRagUILRN5HEUumnVqp1CM=";
+    tag = finalAttrs.version;
+    hash = "sha256-SwtNCAYW+SVUrwwQYxsl5/jMpqcuKZZ+5/qbwntTgjo=";
   };
 
   postPatch = ''
     rm -rf ./rustfs/static
-    cp -rL ${console} ./rustfs/static
+    cp -rL ${finalAttrs.console} ./rustfs/static
   '';
 
-  cargoHash = "sha256-W6+6Ypw9WTbprQbDVbhdvB+hEW71oPOHYQV5bZKtJhc=";
+  cargoHash = "sha256-yWCc5UUbkKI6+HC1qu0rGdw8VLLfm4kwNY9lzOKnKMk=";
 
   nativeBuildInputs = [
     protobuf
     cacert
   ];
 
-  env = {
-    RUSTFLAGS = "--cfg tokio_unstable";
-    # reqwest loads CA certs even if not used during tests
-    SSL_CERT_FILE = "${cacert}/etc/ssl/certs/ca-bundle.crt";
-    # jiff needs a time zone database to resolve zones like UTC during tests
-    TZDIR = "${tzdata}/share/zoneinfo";
-  };
+  inherit console;
+
+  env.RUSTFLAGS = "--cfg tokio_unstable";
 
   # Only build the main rustfs binary
   cargoBuildFlags = "-p rustfs";
-  cargoTestFlags = "-p rustfs";
 
-  # tests share global state and fail depending on execution order,
-  # upstream uses nexttest to run tests in separate processes
-  useNextest = true;
+  # they are to intensive on the resource usage, we are just relying on nixos vm test
+  doCheck = false;
 
-  passthru.tests = {
-    inherit (nixosTests) rustfs;
+  passthru = {
+    tests = {
+      inherit (nixosTests) rustfs;
+    };
+
+    updateScript = lib.getExe (writeShellApplication {
+      name = "rustfs-update-script";
+      runtimeInputs = [ nix-update ];
+      text = ''
+        nix-update rustfs
+        nix-update rustfs.console
+      '';
+    });
   };
 
   meta = {
     description = "S3-compatible high-performance object storage system supporting migration and coexistence with other S3-compatible platforms such as MinIO and Ceph";
     homepage = "https://github.com/rustfs/rustfs";
+    changelog = "https://github.com/rustfs/rustfs/releases/tag/${finalAttrs.version}";
     license = lib.licenses.asl20;
-    maintainers = with lib.maintainers; [ marcel ];
+    maintainers = with lib.maintainers; [
+      marcel
+      adamcstephens
+    ];
     mainProgram = "rustfs";
   };
-}
+})

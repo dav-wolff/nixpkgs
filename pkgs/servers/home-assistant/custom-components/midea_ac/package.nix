@@ -10,13 +10,13 @@
 buildHomeAssistantComponent rec {
   owner = "mill1000";
   domain = "midea_ac";
-  version = "2026.7.2";
+  version = "2026.9.0";
 
   src = fetchFromGitHub {
     owner = "mill1000";
     repo = "midea-ac-py";
     tag = version;
-    hash = "sha256-ErQDCU17qJ3hO7PBawNEn8mj/Gt9kWns6PV5T9OFYqw=";
+    hash = "sha256-c8svh2Td2fxVnoMGhSK9Iz+ZekS7dCvoVQ6Z7WiQgA4=";
   };
 
   dependencies = [ msmart-ng ];
@@ -33,7 +33,6 @@ buildHomeAssistantComponent rec {
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [
       hexa
-      emilylange
     ];
   };
 }

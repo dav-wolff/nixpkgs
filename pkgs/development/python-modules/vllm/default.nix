@@ -16,7 +16,6 @@
   protobuf,
   pkg-config,
   openssl,
-  pyprojectVersionPatchHook,
 
   # build-system
   cmake,
@@ -35,21 +34,15 @@
 
   # dependencies
   aioprometheus,
-  apache-tvm-ffi,
-  amd-aiter,
-  amd-quark,
-  amdsmi,
   anthropic,
   bitsandbytes,
   blake3,
   cachetools,
   cbor2,
   compressed-tensors,
-  datasets,
   depyf,
   einops,
   fastapi,
-  gguf,
   grpcio,
   grpcio-reflection,
   ijson,
@@ -73,8 +66,8 @@
   outlines,
   pandas,
   partial-json-parser,
-  peft,
   prometheus-fastapi-instrumentator,
+  psutil,
   py-cpuinfo,
   pyarrow,
   pybase64,
@@ -86,25 +79,30 @@
   sentencepiece,
   setproctitle,
   tiktoken,
-  timm,
   tokenizers,
-  tokenspeed-mla,
   torch,
   torchaudio,
   torchvision,
   transformers,
   uvicorn,
-  xformers,
   xgrammar,
   # linux-only
-  psutil,
   py-libnuma,
   # cuda-only
   cupy,
   flashinfer-python,
   nvidia-ml-py,
+  tokenspeed-mla,
+  # cuda or rocm only
+  xformers,
   # rocm-only
+  amd-aiter,
+  amd-quark,
+  amdsmi,
   bash,
+  datasets,
+  peft,
+  timm,
 
   # optional-dependencies
   # audio
@@ -119,6 +117,7 @@
   rocmSupport ? torch.rocmSupport,
   rocmPackages ? { },
   gpuTargets ? [ ],
+  emptyDevice ? false,
 }:
 
 let
@@ -162,8 +161,8 @@ let
   deepgemm = fetchFromGitHub {
     owner = "deepseek-ai";
     repo = "DeepGEMM";
-    rev = "891d57b4db1071624b5c8fa0d1e51cb317fa709f";
-    hash = "sha256-sQM8SFkcDJmzyvKl1nv+nkwWaHvvo7mOGyNot2oduJg=";
+    rev = "8b1392b978f5a03c828dd1711090d7fb50958b8a";
+    hash = "sha256-Dy3s3LJXkvgKAOMOwyissYjr47OjkwqlShVKUthL/II=";
     fetchSubmodules = true;
   };
 
@@ -178,8 +177,8 @@ let
       name = "FlashMLA-source";
       owner = "vllm-project";
       repo = "FlashMLA";
-      rev = "a6ec2ba7bd0a7dff98b3f4d3e6b52b159c48d78b";
-      hash = "sha256-Oj37H0swZdxaprpaHq0XfOCagc0ypYKpS8e6JzqcDQg=";
+      rev = "a8f794d1251cbfd88a5011445dd5582289c727e4";
+      hash = "sha256-k/Mbc70U8wbP4BHnxZ/I607Dc2EnIkhWYd9iKUG740Y=";
     };
 
     dontConfigure = true;
@@ -200,8 +199,8 @@ let
   fmha-sm100 = fetchFromGitHub {
     owner = "vllm-project";
     repo = "MSA";
-    rev = "fee783153f3efe57e3e933c5cb7e267a7cebcfb5";
-    hash = "sha256-4yNoYnGK0eElgI01d+n0Hy54oVZLmETVRwnj2Q1/dEY=";
+    rev = "087c161814d4d9c735b46c21212a09e5f8eb92fa";
+    hash = "sha256-y1NZBwmpiILIDb4ph1NJ+0jU1Tg4qP3y4w3tOCN4gEw=";
     fetchSubmodules = true;
   };
 
@@ -215,13 +214,34 @@ let
   };
 
   # grep for GIT_TAG in the following file
+  # https://github.com/vllm-project/vllm/blob/v${version}/cmake/external_projects/tml_fa4.cmake
+  tml-fa4 = fetchFromGitHub {
+    name = "tml-fa4-source";
+    owner = "vllm-project";
+    repo = "tml-fa4";
+    rev = "b206834606ed5b5f21f8eed6b0683f528ea9cf7d";
+    hash = "sha256-LDA5bW4Bf5+w41K9aJ5flz372hy+Ukm//RT55L7nbbU=";
+  };
+
+  # grep for GIT_TAG in the following file
+  # https://github.com/vllm-project/vllm/blob/v${version}/cmake/external_projects/flashkda.cmake
+  flashkda = fetchFromGitHub {
+    name = "FlashKDA-source";
+    owner = "vllm-project";
+    repo = "FlashKDA";
+    rev = "053de1b716ef3255873e02d2d28f4adf09951978";
+    hash = "sha256-ew0xOyDP3Z+2c0azRf+nESZ4wgRXe/qQIyl7K+MmgKI=";
+    fetchSubmodules = true;
+  };
+
+  # grep for GIT_TAG in the following file
   # https://github.com/vllm-project/vllm/blob/v${version}/cmake/external_projects/qutlass.cmake
   qutlass = fetchFromGitHub {
     name = "qutlass-source";
     owner = "IST-DASLab";
     repo = "qutlass";
-    rev = "830d2c4537c7396e14a02a46fbddd18b5d107c65";
-    hash = "sha256-aG4qd0vlwP+8gudfvHwhtXCFmBOJKQQTvcwahpEqC84=";
+    rev = "e74319e3405ce6d71965732880f5dc1f52371f64";
+    hash = "sha256-Gzl3KuYXXLXMrVciEYrBPu1FH2cplGUPTFpWzFfUmMo=";
   };
 
   vllm-flash-attn' = lib.defaultTo (stdenv.mkDerivation {
@@ -235,21 +255,16 @@ let
       name = "flash-attention-source";
       owner = "vllm-project";
       repo = "flash-attention";
-      rev = "803020a8fa15407871341d41eba4919ade2ee1ee";
-      hash = "sha256-Ioq6C7jWvuCs3OGoQV0jeih2YGhdxLB2WAp1a2pe024=";
+      rev = "f3e1a4f74c99145c0717709860bf765de1703779";
+      hash = "sha256-/szsVNSp1LvT2Ojbj67jy6tY31RTPR1qW2XzcB31B80=";
     };
 
     patches = [
       # fix Hopper build failure
       # https://github.com/Dao-AILab/flash-attention/pull/1719
-      # https://github.com/Dao-AILab/flash-attention/pull/1723
       (fetchpatch {
         url = "https://github.com/Dao-AILab/flash-attention/commit/dad67c88d4b6122c69d0bed1cebded0cded71cea.patch";
         hash = "sha256-JSgXWItOp5KRpFbTQj/cZk+Tqez+4mEz5kmH5EUeQN4=";
-      })
-      (fetchpatch {
-        url = "https://github.com/Dao-AILab/flash-attention/commit/e26dd28e487117ee3e6bc4908682f41f31e6f83a.patch";
-        hash = "sha256-NkCEowXSi+tiWu74Qt+VPKKavx0H9JeteovSJKToK9A=";
       })
     ];
 
@@ -270,7 +285,7 @@ let
     '';
   }) vllm-flash-attn;
 
-  cpuSupport = !cudaSupport && !rocmSupport;
+  cpuSupport = !cudaSupport && !rocmSupport && !emptyDevice;
 
   # https://github.com/pytorch/pytorch/blob/v2.9.1/torch/utils/cpp_extension.py#L2407-L2410
   supportedTorchCudaCapabilities =
@@ -371,14 +386,15 @@ in
 
 buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
   pname = "vllm";
-  version = "0.24.0";
+  version = "0.28.0";
   pyproject = true;
+  __structuredAttrs = true;
 
   src = fetchFromGitHub {
     owner = "vllm-project";
     repo = "vllm";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-ArmNLA71YRNpBAMlWxwBzUroMFjhyZ2ZsjX8JNc4pH4=";
+    hash = "sha256-Ia5SB9bQ+Vxkc5wBwY7HxQo6rqYFpWlVxeQyyP55dMg=";
   };
 
   cargoRoot = "rust";
@@ -389,7 +405,7 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
       src
       cargoRoot
       ;
-    hash = "sha256-Kdp0+NzDBs9S57XUVNmV7q1fxGog1rd3lh+J5F3vQqY=";
+    hash = "sha256-CLvLAkejYfrnrPXJ78xh2mgCyRg7F56Um1LPnJtj7iw=";
   };
 
   patches = [
@@ -431,13 +447,12 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
   pythonRelaxDeps = true;
 
   pythonRemoveDeps = [
+    # Not packaged in nixpkgs.
     "flashinfer-cubin"
     "nvidia-cudnn-frontend"
+    "apache-tvm-ffi" # vllm does not depend on it directly, its version is only pinned for compatibility with tilelang (also removed).
     "tilelang"
     "fastsafetensors"
-
-    # Optional on ROCm
-    "tokenspeed-mla"
 
     # QuACK and Cutlass DSL seem to be added only for FA4
     # which in our case handles its own deps
@@ -455,7 +470,6 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
     rustc
     protobuf
     pkg-config
-    pyprojectVersionPatchHook
   ]
   ++ lib.optionals rocmSupport [
     rocmPackages.hipcc
@@ -529,8 +543,6 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
 
   dependencies = [
     aioprometheus
-    apache-tvm-ffi
-    amd-quark
     anthropic
     bitsandbytes
     blake3
@@ -540,7 +552,6 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
     depyf
     einops
     fastapi
-    gguf
     grpcio
     grpcio-reflection
     ijson
@@ -565,6 +576,7 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
     pandas
     partial-json-parser
     prometheus-fastapi-instrumentator
+    psutil
     py-cpuinfo
     pyarrow
     pybase64
@@ -584,13 +596,11 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
     torchvision
     transformers
     uvicorn
-    xformers
     xgrammar
   ]
   ++ uvicorn.optional-dependencies.standard
   ++ aioprometheus.optional-dependencies.starlette
   ++ lib.optionals stdenv.targetPlatform.isLinux [
-    psutil
     py-libnuma
   ]
   ++ lib.optionals cudaSupport [
@@ -599,8 +609,12 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
     nvidia-ml-py
     tokenspeed-mla
   ]
+  ++ lib.optionals (cudaSupport || rocmSupport) [
+    xformers # Only depended on by Pixtral. Removed in vllm-project/vllm#52185.
+  ]
   ++ lib.optionals rocmSupport [
     amd-aiter
+    amd-quark
     rocmPackages.rocminfo
     amdsmi
     datasets
@@ -621,12 +635,13 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
   cmakeFlags = [
   ]
   ++ lib.optionals cudaSupport [
-    (lib.cmakeFeature "DEEPGEMM_SRC_DIR" "${lib.getDev deepgemm}")
-    (lib.cmakeFeature "FETCHCONTENT_SOURCE_DIR_CUTLASS" "${lib.getDev cutlass}")
-    (lib.cmakeFeature "FLASH_MLA_SRC_DIR" "${lib.getDev flashmla}")
-    (lib.cmakeFeature "FMHA_SM100_SRC_DIR" "${lib.getDev fmha-sm100}")
-    (lib.cmakeFeature "VLLM_FLASH_ATTN_SRC_DIR" "${lib.getDev vllm-flash-attn'}")
-    (lib.cmakeFeature "QUTLASS_SRC_DIR" "${lib.getDev qutlass}")
+    (lib.cmakeFeature "DEEPGEMM_SRC_DIR" (lib.getDev deepgemm).outPath)
+    (lib.cmakeFeature "FETCHCONTENT_SOURCE_DIR_CUTLASS" (lib.getDev cutlass).outPath)
+    (lib.cmakeFeature "FLASH_KDA_SRC_DIR" (lib.getDev flashkda).outPath)
+    (lib.cmakeFeature "FLASH_MLA_SRC_DIR" (lib.getDev flashmla).outPath)
+    (lib.cmakeFeature "FMHA_SM100_SRC_DIR" (lib.getDev fmha-sm100).outPath)
+    (lib.cmakeFeature "VLLM_FLASH_ATTN_SRC_DIR" (lib.getDev vllm-flash-attn').outPath)
+    (lib.cmakeFeature "QUTLASS_SRC_DIR" (lib.getDev qutlass).outPath)
     (lib.cmakeFeature "TORCH_CUDA_ARCH_LIST" "${gpuTargetString}")
     (lib.cmakeFeature "CUTLASS_NVCC_ARCHS_ENABLED" "${cudaPackages.flags.cmakeCudaArchitecturesString}")
     (lib.cmakeFeature "CUDA_TOOLKIT_ROOT_DIR" "${symlinkJoin {
@@ -640,11 +655,13 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
 
   env = {
     VLLM_REQUIRE_RUST_FRONTEND = "1";
+    VLLM_VERSION_OVERRIDE = finalAttrs.version;
   }
   // lib.optionalAttrs cudaSupport {
     VLLM_TARGET_DEVICE = "cuda";
     CUDA_HOME = "${lib.getDev cudaPackages.cuda_nvcc}";
     TRITON_KERNELS_SRC_DIR = "${lib.getDev triton-kernels}/python/triton_kernels/triton_kernels";
+    TML_FA4_SRC_DIR = "${lib.getDev tml-fa4}";
   }
   // lib.optionalAttrs rocmSupport {
     VLLM_TARGET_DEVICE = "rocm";
@@ -657,7 +674,11 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
   }
   // lib.optionalAttrs cpuSupport {
     VLLM_TARGET_DEVICE = "cpu";
+    VLLM_VERSION_OVERRIDE = "${finalAttrs.version}+cpu";
     FETCHCONTENT_SOURCE_DIR_ONEDNN = "${onednn.src}";
+  }
+  // lib.optionalAttrs emptyDevice {
+    VLLM_TARGET_DEVICE = "empty";
   };
 
   preConfigure = ''
@@ -667,6 +688,10 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
   '';
 
   pythonImportsCheck = [ "vllm" ];
+
+  # vLLM detects the CPU platform from the "+cpu" suffix.
+  dontCheckPythonMetadata = cpuSupport;
+
   makeWrapperArgs =
     lib.optionals (cudaSupport && cudaPackages ? nccl) [
       "--set"
@@ -696,6 +721,7 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
     changelog = "https://github.com/vllm-project/vllm/releases/tag/${finalAttrs.src.tag}";
     homepage = "https://github.com/vllm-project/vllm";
     license = lib.licenses.asl20;
+    mainProgram = "vllm";
     maintainers = with lib.maintainers; [
       happysalada
       lach
@@ -703,10 +729,14 @@ buildPythonPackage.override { stdenv = torch.stdenv; } (finalAttrs: {
       LunNova # esp. for ROCm
     ];
     badPlatforms = [
+      # error: could not find git for clone of arm_compute-populate
+      "aarch64-linux"
+
       # CMake Error at cmake/cpu_extension.cmake:188 (message):
       #   vLLM CPU backend requires AVX512, AVX2, Power9+ ISA, S390X ISA, ARMv8 or
       #   RISC-V support.
       "aarch64-darwin"
     ];
+    broken = cudaSupport;
   };
 })

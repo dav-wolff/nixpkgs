@@ -37,16 +37,15 @@
 
 buildPythonPackage (finalAttrs: {
   pname = "fireworks-ai";
-  version = "1.2.8";
+  version = "1.2.11";
   pyproject = true;
   __structuredAttrs = true;
-  strictDeps = true;
 
   src = fetchFromGitHub {
     owner = "fw-ai-external";
     repo = "python-sdk";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-V3xU/6pmiNVUvMaTWPduoyum9R1IN+Vq36JkIDkAoY4=";
+    hash = "sha256-OZryFzU9895vA66ArQlnrJoVPKqaj7wY1/JAUQtB3KM=";
   };
 
   postPatch = ''

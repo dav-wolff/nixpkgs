@@ -100,6 +100,9 @@ stdenv.mkDerivation (finalAttrs: {
     # Make D-Bus services wrappable.
     ./wrap-services.patch
 
+    # Detect profile switches even when icon directory mtimes are unchanged.
+    ./icon-theme-directory-identity.patch
+
     # Fix greeter logo being too big.
     # https://gitlab.gnome.org/GNOME/gnome-shell/issues/2591
     # Reverts https://gitlab.gnome.org/GNOME/gnome-shell/-/merge_requests/1101
@@ -259,7 +262,7 @@ stdenv.mkDerivation (finalAttrs: {
   strictDeps = true;
 
   meta = {
-    description = "Core user interface for the GNOME 3 desktop";
+    description = "Core user interface for the GNOME desktop";
     homepage = "https://gitlab.gnome.org/GNOME/gnome-shell";
     changelog = "https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/${finalAttrs.version}/NEWS?ref_type=tags";
     license = lib.licenses.gpl2Plus;

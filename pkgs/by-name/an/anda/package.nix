@@ -11,16 +11,16 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "anda";
-  version = "0.8.3";
+  version = "0.8.13";
 
   src = fetchFromGitHub {
     owner = "FyraLabs";
     repo = "anda";
     tag = finalAttrs.version;
-    hash = "sha256-TSO2ABMD2uKY0sCsflhCv760t7vm1fTFJ3tgsyWH7FM=";
+    hash = "sha256-cfGYUlDxrTDtu8zgMgSTsCP/7HWp03cinRqGnniP9GE=";
   };
 
-  cargoHash = "sha256-viDT1AI+jhZTr75tvUycMoSyQhidq3PA6eoU2jUvBkk=";
+  cargoHash = "sha256-jy0/PApr54SgLZkPMOENK4oCZNakYFXzXes9dLFKY3k=";
 
   __structuredAttrs = true;
 

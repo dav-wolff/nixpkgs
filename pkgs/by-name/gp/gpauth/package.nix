@@ -2,10 +2,12 @@
   rustPlatform,
   lib,
   fetchFromGitHub,
+  glib-networking,
   openssl,
   pkg-config,
   perl,
   webkitgtk_4_1,
+  wrapGAppsHook3,
   stdenv,
   nix-update-script,
 }:
@@ -29,11 +31,15 @@ rustPlatform.buildRustPackage (finalAttrs: {
   nativeBuildInputs = [
     perl
     pkg-config
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [
+    wrapGAppsHook3
   ];
   buildInputs = [
     openssl
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [
+    glib-networking
     webkitgtk_4_1
   ];
 
@@ -58,7 +64,6 @@ rustPlatform.buildRustPackage (finalAttrs: {
     homepage = "https://github.com/${finalAttrs.src.owner}/${finalAttrs.src.repo}";
     license = lib.licenses.gpl3Only;
     maintainers = with lib.maintainers; [
-      binary-eater
       booxter
       m1dugh
     ];

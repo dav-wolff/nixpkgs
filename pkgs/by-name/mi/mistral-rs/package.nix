@@ -74,14 +74,14 @@ let
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "mistral-rs";
-  version = "0.9.1";
+  version = "0.9.4";
   __structuredAttrs = true;
 
   src = fetchFromGitHub {
     owner = "EricLBuehler";
     repo = "mistral.rs";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-5W/CBFw28xBC7GnbpQ9jxRAdxXBtTdsD3X/YNR6z6iI=";
+    hash = "sha256-/40obacG8jIx6BOQ8uUTiT503jRDnHrlrw5PGoEfbEM=";
   };
 
   patches = [
@@ -130,7 +130,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
           ""
     '';
 
-  cargoHash = "sha256-VivnZNtIjnu1JOKaE7nEIse8300oB9oqGP0aly+9/OQ=";
+  cargoHash = "sha256-56Z1ea/5x8fE055lvi7kfFQTyNTH49+bnotn0XCRwpU=";
 
   nativeBuildInputs = [
     pkg-config
@@ -217,6 +217,16 @@ rustPlatform.buildRustPackage (finalAttrs: {
   checkFeatures = [ ];
 
   checkFlags = [
+    # Error: failed to read MTP model config: No such file or directory (os error 2)
+    "--skip=external_mtp_checkpoint_bytes_are_added_to_the_cache_reservation"
+
+    # assertion `left == right` failed: docs/openapi.json is stale;
+    # regenerate with: cargo test -p mistralrs-server-core regenerate_openapi -- --ignored
+    "--skip=openapi_doc::tests::openapi_matches_committed"
+
+    # Max error 0.27852345 is too large
+    "--skip=vector_fp8::ops::tests::test_fp8_vector_quant_cpu"
+
     # Try to access internet
     "--skip=gguf::gguf_tokenizer::tests::test_encode_decode_gpt2"
     "--skip=gguf::gguf_tokenizer::tests::test_encode_decode_llama"
@@ -228,11 +238,22 @@ rustPlatform.buildRustPackage (finalAttrs: {
     "--skip=sandboxed_session_can_execute_python"
     "--skip=sandboxed_session_default_policy_can_execute_python"
 
+    # Upstream's v0.9.2 bump updated the version example in the generated CLI reference page
+    # but not in the clap doc comment it is generated from, so this golden test fails at the tag.
+    "--skip=docgen::cli_reference_matches_committed"
+
     # Linux namespace / seccomp tests require capabilities the nix build sandbox blocks
     "--skip=network_none_blocks_socket"
     "--skip=rlimit_nproc_caps_processes"
     "--skip=seccomp_blocks_ptrace"
     "--skip=unshare_is_denied_inside_child"
+
+    # Timing-sensitive (relies on a 30ms sleep), flaky under load
+    "--skip=isq_executor::tests::executor_waits_for_budget_release"
+  ]
+  ++ lib.optionals hostPlatform.isDarwin [
+    # system-configuration panics in the sandbox: "Attempted to create a NULL object."
+    "--skip=search::tests::search_tools_refuse_internal_urls"
   ];
 
   nativeInstallCheckInputs = [

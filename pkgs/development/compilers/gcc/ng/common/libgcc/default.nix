@@ -13,6 +13,13 @@
   which,
   python3,
 
+  # A threading library separate from the libc, for targets whose libc does not
+  # offer the model we want — MinGW, with `mcfgthreads`. `null` means "whatever
+  # the libc offers". Whatever is passed has to be buildable without threads
+  # itself, since it comes before the libgcc that would otherwise provide them;
+  # see the bootstrap chain in ../../README.md.
+  threads ? null,
+
   # Build `libgcc_s` as well as `libgcc.a`. Only ever worth turning *off*: the
   # assertion below refuses to force it on where the default says it cannot
   # work, since what follows from that is a link failure much further away.
@@ -21,18 +28,29 @@
   # The following are arguments rather than a `let` bindings only so
   # that it is in scope for the default definition above.
 
-  # Whether a shared libgcc can be built at all here, derived the way the
-  # monolithic build derives it rather than forced off.
+  # Whether to build a shared libgcc.
   #
-  # Shared needs something to link against. Normally that is the libc, on any
-  # format -- PE/COFF included -- which is why every stage after the bootstrap
-  # builds it. ELF additionally allows it *before* the libc exists, because a
-  # shared object may keep undefined symbols; `libgcc_s.so` comes out with an
-  # empty `DT_NEEDED`, which is why the monolithic build ships one even from
-  # its nolibc stage. A PE/COFF DLL must resolve everything at link time, so
-  # there the bootstrap yields only `libgcc.a` -- all it is used for anyway.
+  # In addition to being the default, this is also the *maximal* condition --
+  # by default we enable shared wherever possible, and enabling shared in more
+  # cases should not work. That is why this is also used in the assert below.
   __defaultEnableShared ?
-    stdenv.hostPlatform.hasSharedLibraries && (__haveLinkableLibc || stdenv.hostPlatform.isElf),
+    # Of course if the platform as a whole doesn't support shared libraries, we
+    # cannot either.
+    stdenv.hostPlatform.hasSharedLibraries
+    # libstdc++ and libgomp choke if we try to build a shared libgcc, because
+    # the shared libgcc has fewer symbols, with the unwinder and the emulated-
+    # TLS support in `libgcc_eh.a` instead, which those libraries don't link.
+    #
+    # We could perhaps patch those libraries to link `libgcc_eh.a` too as
+    # needed, but it didn't feel worth the fight at this time.
+    && !stdenv.hostPlatform.isCygwin
+    # Shared needs something to link against. Normally that is the libc, on any
+    # format -- PE/COFF included -- which is why every stage after the bootstrap
+    # builds it. ELF additionally allows it *before* the libc exists, because a
+    # shared object may keep undefined symbols; `libgcc_s.so` comes out with an
+    # empty `DT_NEEDED`. A PE/COFF DLL must resolve everything at link time, so
+    # there the bootstrap yields only `libgcc.a` -- all it is used for anyway.
+    && (__haveLinkableLibc || stdenv.hostPlatform.isElf),
 
   # Whether the compiler has a libc that can actually be linked against, as
   # opposed to nothing at all or a headers-only stand-in.
@@ -50,18 +68,33 @@ let
   # finished libc. Everything below reads that one value.
   libc = stdenv.cc.libc or null;
 
-  # Which threading model may be used is decided by the libc, so take it from
-  # there rather than guess — and pass it on in `passthru` so that `libstdcxx`,
-  # which has to agree, reads the same answer instead of probing for its own.
+  # Which threading model may be used is decided by whatever provides the
+  # threads — usually the libc, but the separate `threads` package where one
+  # is given — so take it from there rather than guess, and pass it on in
+  # `passthru` so that `libstdcxx`, which has to agree, reads the same answer
+  # instead of probing for its own.
   #
-  # This is what makes the bootstrap build single-threaded without being told
-  # to be: a headers-only package declares no `threadModel`, and a real libc
-  # does. That build exists only to get the libc built and is thrown away
-  # afterwards, so there is nothing to be gained from threading it, and plenty
-  # to go wrong: `gthr-posix.h` includes `<pthread.h>` unconditionally, which
-  # at that point is either absent or a stand-in for a libc that does not exist
-  # yet.
-  threadModel = if libc == null then "single" else libc.threadModel or "single";
+  # A headers-only package declares no `threadModel`, and a real libc does.
+  # That build exists only to get the libc built and is thrown away afterwards,
+  # so there is nothing to be gained from threading it, and plenty to go wrong:
+  # `gthr-posix.h` includes `<pthread.h>` unconditionally, which at that point
+  # is either absent or a stand-in for a libc that does not exist yet.
+  #
+  # If, in the future, we ever wish to use the headers-only build to avoid
+  # building those other libraries twice (other distros sometimes do this), we
+  # would declare the threading model unconditonally, and then there would be
+  # more cyclic symbol-level dependencies between them and us.
+  #
+  # libgcc (and libstdc++) read this attribute rather than probing the
+  # compiler, which in a split package set is configured separately from the
+  # runtimes and so can disagree. Only if we switched `cc-wrapper` to give GCC
+  # "spec files" (more powerful than CLI flags) would be be able to get the
+  # compiler `-v` flag correct with respect to the libraries it happend to be
+  # wrapped with.
+  #
+  # A `threads` package wins over the libc: that is the point of asking for
+  # one, and it is only passed to the builds that come after the libc.
+  threadModel = threads.threadModel or (libc.threadModel or "single");
 in
 
 assert enableShared -> __defaultEnableShared;
@@ -90,44 +123,88 @@ stdenv.mkDerivation (finalAttrs: {
     python3
   ];
 
-  patches = [
-    (fetchpatch {
-      name = "delete-MACHMODE_H.patch";
-      url = "https://github.com/gcc-mirror/gcc/commit/493aae4b034d62054d5e7e54dc06cd9a8be54e29.diff";
-      hash = "sha256-oEk0lnI96RlpALWpb7J+GnrtgQsFVqDO57I/zjiqqTk=";
-    })
-    (fetchpatch {
-      name = "custom-threading-model.patch";
-      url = "https://github.com/gcc-mirror/gcc/commit/e5d853bbe9b05d6a00d98ad236f01937303e40c4.diff";
-      hash = "sha256-92LIttIXdh12/lRhivb2JTPpqUmGBRn+uKmR5pzuveo=";
-      includes = [
-        "config/*"
-        "libgcc/configure.ac"
-      ];
-    })
-    (fetchpatch {
-      name = "no-pie-cflags.patch";
-      url = "https://github.com/gcc-mirror/gcc/commit/77144dd3b6736e0166156bb509590d924375a4f1.diff";
-      hash = "sha256-QlxlTkWAK1dB7JiU5wz2iOW24gj3bFaeBpwb90oWwns=";
-      includes = [
-        "gcc/Makefile.in"
-        "gcc/configure.ac"
-        "libgcc/Makefile.in"
-        "libgcc/configure.ac"
-      ];
-    })
-    (fetchpatch {
-      name = "no-target-system-root.patch";
-      url = "https://github.com/gcc-mirror/gcc/commit/9947930b7ae923010c5061fd8fa6b1ec4f22f161.diff";
-      hash = "sha256-BZmpHpJuuyDmQMwpQhSgCZO0Rg7kXt8rTiJAT+e0sUw=";
-    })
-    (fetchpatch {
-      name = "regular-libdir-includedir.patch";
-      url = "https://inbox.sourceware.org/gcc-patches/20250717174911.1536129-1-git@JohnEricson.me/raw";
-      hash = "sha256-Cn7rvg1FI7H/26GzSe4pv5VW/gvwbwGqivAqEeawkwk=";
-    })
-    (getVersionFile "libgcc/force-regular-dirs.patch")
-  ];
+  # The `gthr-<model>.h` header for a non-libc threading model includes that
+  # library's own headers, and `libgcc_s` links against it.
+  buildInputs = lib.optional (threads != null) threads;
+
+  # Move `.cfi_startproc` after the function label in the aarch64 LSE helpers.
+  # clang 18 and later refuse to assemble the output otherwise, which is what
+  # stops LLVM building against this libgcc. Not upstream in 16. Held back on
+  # Darwin as the monolithic set does.
+  patches =
+    lib.optionals (!stdenv.hostPlatform.isDarwin) [
+      ./cfi_startproc-reorder-label.diff
+    ]
+    # Darwin is in scope but untested here. `darwin-detection` is paired by
+    # version in the monolithic set -- 14's variant for 16, 15's for 15 --
+    # which is what `getVersionFile` resolves to.
+    #
+    # The third is Iain Sandoe's branch, taken from Homebrew as the monolithic
+    # set takes it. It spans the monorepo, so this is only the part that lives
+    # here; `gcc` and `libsanitizer` take theirs the same way. It is also what
+    # makes `cfi_startproc-reorder-label` above redundant on Darwin: it drops
+    # `STARTFN` for an `ENTRY` macro that already writes the label ahead of
+    # `.cfi_startproc`.
+    ++ lib.optionals stdenv.hostPlatform.isDarwin [
+      ./darwin-fix-reexport.patch
+      (getVersionFile "libgcc/darwin-detection.patch")
+      (fetchpatch {
+        name = "darwin-aarch64-support.patch";
+        url =
+          if lib.versionAtLeast release_version "16" then
+            "https://raw.githubusercontent.com/Homebrew/homebrew-core/70e2a9e1d072fa3bc34cf41d97f4b65bede2b01e/Patches/gcc/gcc-16.1.0.diff"
+          else
+            "https://raw.githubusercontent.com/Homebrew/homebrew-core/70e2a9e1d072fa3bc34cf41d97f4b65bede2b01e/Patches/gcc/gcc-15.3.0.diff";
+        includes = [ "libgcc/*" ];
+        hash =
+          if lib.versionAtLeast release_version "16" then
+            "sha256-hDtEL/xAtavikWa1JYNbJLkyydc5H/iu2W7lvz+mRG0="
+          else
+            "sha256-5ctdSqxRJ445SSNao29WVurZsPbmgrCN+RmCAIEyUXw=";
+      })
+    ]
+    # Backports of commits that are in the GCC 16 release branch already.
+    ++ lib.optionals (lib.versionOlder release_version "16") [
+      (fetchpatch {
+        name = "delete-MACHMODE_H.patch";
+        url = "https://github.com/gcc-mirror/gcc/commit/493aae4b034d62054d5e7e54dc06cd9a8be54e29.diff";
+        hash = "sha256-oEk0lnI96RlpALWpb7J+GnrtgQsFVqDO57I/zjiqqTk=";
+      })
+      (fetchpatch {
+        name = "custom-threading-model.patch";
+        url = "https://github.com/gcc-mirror/gcc/commit/e5d853bbe9b05d6a00d98ad236f01937303e40c4.diff";
+        hash = "sha256-92LIttIXdh12/lRhivb2JTPpqUmGBRn+uKmR5pzuveo=";
+        includes = [
+          "config/*"
+          "libgcc/configure.ac"
+        ];
+      })
+      (fetchpatch {
+        name = "no-pie-cflags.patch";
+        url = "https://github.com/gcc-mirror/gcc/commit/77144dd3b6736e0166156bb509590d924375a4f1.diff";
+        hash = "sha256-QlxlTkWAK1dB7JiU5wz2iOW24gj3bFaeBpwb90oWwns=";
+        includes = [
+          "gcc/Makefile.in"
+          "gcc/configure.ac"
+          "libgcc/Makefile.in"
+          "libgcc/configure.ac"
+        ];
+      })
+      (fetchpatch {
+        name = "no-target-system-root.patch";
+        url = "https://github.com/gcc-mirror/gcc/commit/9947930b7ae923010c5061fd8fa6b1ec4f22f161.diff";
+        hash = "sha256-BZmpHpJuuyDmQMwpQhSgCZO0Rg7kXt8rTiJAT+e0sUw=";
+      })
+    ]
+    # Not upstream anywhere yet.
+    ++ [
+      (fetchpatch {
+        name = "regular-libdir-includedir.patch";
+        url = "https://inbox.sourceware.org/gcc-patches/20250717174911.1536129-1-git@JohnEricson.me/raw";
+        hash = "sha256-Cn7rvg1FI7H/26GzSe4pv5VW/gvwbwGqivAqEeawkwk=";
+      })
+      (getVersionFile "libgcc/force-regular-dirs.patch")
+    ];
 
   autoreconfFlags = "--install --force --verbose . libgcc";
 
@@ -349,6 +426,13 @@ stdenv.mkDerivation (finalAttrs: {
     "--disable-vtable-verify"
 
     "--with-system-zlib"
+
+    # State this rather than leave it to be inferred (see below): configure
+    # works it out from `host != target` alone, so a native build of the
+    # pre-libc stage would come out `false` and compile every file against a
+    # libc that is not there yet. A value given here wins, since configure only
+    # defaults it, with `: ${inhibit_libc=false}`.
+    "inhibit_libc=${if libc == null then "true" else "false"}"
   ]
   # `gcc/configure` sets `inhibit_libc=true` when host != target and
   # `$target_header_dir/stdio.h` does not exist. `inhibit_libc` makes

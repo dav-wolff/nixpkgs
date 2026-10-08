@@ -295221,7 +295221,7 @@ self: {
       hydraPlatforms = lib.platforms.none;
       broken = true;
     }
-  ) { inherit (pkgs) gtksourceview; };
+  ) { gtksourceview = null; };
 
   gtksourceview3 = callPackage (
     {
@@ -496548,6 +496548,7 @@ self: {
       ];
       description = "An opinionated formatter for Nix";
       license = lib.licenses.mpl20;
+      hydraPlatforms = lib.platforms.none;
       mainProgram = "nixfmt";
     }
   ) { };
@@ -694070,7 +694071,7 @@ self: {
       hydraPlatforms = lib.platforms.none;
       broken = true;
     }
-  ) { inherit (pkgs) libtensorflow; };
+  ) { libtensorflow = null; };
 
   tensorflow-core-ops = callPackage (
     {

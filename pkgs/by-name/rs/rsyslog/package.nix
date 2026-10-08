@@ -15,8 +15,8 @@
   libyaml,
   withKrb5 ? true,
   libkrb5,
-  withSystemd ? lib.meta.availableOn stdenv.hostPlatform systemd,
-  systemd,
+  withSystemd ? lib.meta.availableOn stdenv.hostPlatform systemdLibs,
+  systemdLibs,
   withJemalloc ? true,
   jemalloc,
   withMysql ? true,
@@ -64,21 +64,25 @@
   nixosTests,
 }:
 
+let
+  # TODO: remove when https://github.com/NixOS/nixpkgs/pull/571072 hits master
+  systemdLibs' = systemdLibs.override { withCompression = true; };
+in
 stdenv.mkDerivation (finalAttrs: {
   pname = "rsyslog";
-  version = "8.2606.0";
+  version = "8.2608.0";
 
   src = fetchurl {
     url = "https://www.rsyslog.com/files/download/rsyslog/rsyslog-${finalAttrs.version}.tar.gz";
-    hash = "sha256-JXSz8waOaVXrlO9WQ+K2pbhYXMjqp3IJ/1y8Hi5fceU=";
+    hash = "sha256-49YMg0BSaMQi+V/ux0BFWhzEuRHQC9hCTV0ScrxQmxo=";
   };
 
   patches = [
-    # Remove with rsyslog 8.2608.0 or newer.
+    # Remove with the first rsyslog release containing this fix.
     (fetchpatch {
-      name = "CVE-2026-19654.patch";
-      url = "https://github.com/rsyslog/rsyslog/commit/f7f774228273730ba1075f4cd457ae78303a8f08.patch";
-      hash = "sha256-ww8Ade2eKrQygJduLMPFjxd/fmBnpQ4ePLEzHffPy90=";
+      name = "CVE-2026-78002.patch";
+      url = "https://github.com/rsyslog/rsyslog/commit/667e3f61aec5ee02c5c2ee6f0f8accf6fe4301a9.patch";
+      hash = "sha256-QsxOJCvr6VBbLbXzednwgvCfisSvNm6zfxPaMFxXVT0=";
     })
   ];
 
@@ -119,7 +123,7 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optional withHiredis hiredis
   ++ lib.optional withMaxminddb libmaxminddb
   ++ lib.optional withMysql libmysqlclient
-  ++ lib.optional withSystemd systemd;
+  ++ lib.optional withSystemd systemdLibs';
 
   configureFlags = [
     "--sysconfdir=/etc"

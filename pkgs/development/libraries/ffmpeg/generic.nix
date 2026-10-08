@@ -102,7 +102,10 @@
   withKvazaar ? withFullDeps, # HEVC encoding
   withLadspa ? withFullDeps, # LADSPA audio filtering
   withLc3 ? withFullDeps && lib.versionAtLeast version "7.1", # LC3 de/encoding
-  withLcevcdec ? withFullDeps && lib.versionAtLeast version "7.1", # LCEVC decoding
+  withLcevcdec ?
+    withFullDeps
+    && lib.versionAtLeast version "7.1"
+    && lib.meta.availableOn stdenv.hostPlatform lcevcdec, # LCEVC decoding
   withLcms2 ? withFullDeps, # ICC profile support via lcms2
   withLzma ? withHeadlessDeps, # xz-utils
   withMetal ? false, # Unfree and requires manual downloading of files
@@ -146,7 +149,6 @@
   withSsh ? withHeadlessDeps, # SFTP protocol
   withSvg ? withFullDeps, # SVG protocol
   withSvtav1 ? withHeadlessDeps && !stdenv.hostPlatform.isMinGW, # AV1 encoder/decoder (focused on speed and correctness)
-  withTensorflow ? false, # Tensorflow dnn backend support (Increases closure size by ~390 MiB)
   withTheora ? withHeadlessDeps, # Theora encoder
   withTwolame ? withFullDeps, # MP2 encoding
   withUavs3d ? withFullDeps, # AVS3 decoder
@@ -307,7 +309,6 @@
   librist,
   librsvg,
   libssh,
-  libtensorflow,
   libtheora,
   libv4l,
   libva,
@@ -467,6 +468,15 @@ stdenv.mkDerivation (
       ]
       ++ optionals (lib.versionAtLeast version "5.1") [
         ./nvccflags-cpp14.patch
+      ]
+      ++ optionals (lib.versionAtLeast version "8.1.2") [
+        # https://code.ffmpeg.org/FFmpeg/FFmpeg/pulls/23825 (merged, but not backported to 8.1.x or 9.0.x)
+        # As git.ffmpeg.org deploys Anubis, we cannot fetch this patch reliably from there.
+        # So instead, we fetch it from Debian.
+        (fetchpatch2 {
+          url = "https://salsa.debian.org/multimedia-team/ffmpeg/-/raw/d52aea25bc9123bfaf61f7a7e5a0d9da01c8788d/debian/patches/0001-swscale-loongarch-fix-buffer-underflow-in-yuv2plane1.patch";
+          hash = "sha256-QRkb7z4Btyd9ZgV/1hh6Fb87IhkygFgVDqQdloXKL6Q=";
+        })
       ]
       ++ optionals (lib.versionAtLeast version "7.0" && lib.versionOlder version "7.1.4") [
         (fetchpatch2 {
@@ -730,7 +740,7 @@ stdenv.mkDerivation (
       (enableFeature withSsh "libssh")
       (enableFeature withSvg "librsvg")
       (enableFeature withSvtav1 "libsvtav1")
-      (enableFeature withTensorflow "libtensorflow")
+      (enableFeature false "libtensorflow")
       (enableFeature withTheora "libtheora")
       (enableFeature withTwolame "libtwolame")
       (enableFeature withUavs3d "libuavs3d")
@@ -953,7 +963,6 @@ stdenv.mkDerivation (
       ++ optionals withSsh [ libssh ]
       ++ optionals withSvg [ librsvg ]
       ++ optionals withSvtav1 [ svt-av1 ]
-      ++ optionals withTensorflow [ libtensorflow ]
       ++ optionals withTheora [ libtheora ]
       ++ optionals withTwolame [ twolame ]
       ++ optionals withUavs3d [ uavs3d ]
@@ -1100,6 +1109,9 @@ stdenv.mkDerivation (
         emily
       ];
       mainProgram = "ffmpeg";
+      identifiers.cpeParts = lib.meta.cpeFullVersionWithVendor "ffmpeg" finalAttrs.version // {
+        product = "ffmpeg";
+      };
     };
   }
   // lib.optionalAttrs withCudaLLVM {

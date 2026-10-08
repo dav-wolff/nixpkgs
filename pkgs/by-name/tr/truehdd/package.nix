@@ -6,7 +6,7 @@
 }:
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "truehdd";
-  version = "0.5.3";
+  version = "0.6.2";
 
   __structuredAttrs = true;
 
@@ -14,10 +14,10 @@ rustPlatform.buildRustPackage (finalAttrs: {
     owner = "truehdd";
     repo = "truehdd";
     tag = finalAttrs.version;
-    hash = "sha256-paVH6NmPvRHozxDRO4zy+YOjfZQSidlqbd5hZZWwKF8=";
+    hash = "sha256-MpJmAEBUdPY7+VSbw0VILr2Smcnfu1WmWOB/uOyPOlM=";
   };
 
-  cargoHash = "sha256-cuzaDTfZ6u6V3FUY913lyB4zy5GsNBam43mrnz3x6MI=";
+  cargoHash = "sha256-BWJUIJcXRjrb2P0EXNdvhVkyq93J3CkYPUYdXgEsYQ4=";
 
   env.VERGEN_GIT_DESCRIBE = finalAttrs.version;
 

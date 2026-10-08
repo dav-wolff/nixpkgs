@@ -335,7 +335,7 @@ class BaseMachine(ABC):
         ...
 
     @abstractmethod
-    def wait_for_shutdown(self) -> None:
+    def wait_for_shutdown(self, timeout: dt.timedelta | None = None) -> None:
         """Wait for the machine to power off. This does *not* initiate a shutdown;
         that's usually done via `shutdown()`.
         """
@@ -1061,7 +1061,7 @@ class QemuMachine(BaseMachine):
                 break
             self.send_console(char.decode())
 
-    def wait_for_shutdown(self) -> None:
+    def wait_for_shutdown(self, timeout: dt.timedelta | None = None) -> None:
         """
         Wait for the VM to power off. This does *not* initiate a shutdown;
         that's usually done via `shutdown()`.
@@ -1072,7 +1072,9 @@ class QemuMachine(BaseMachine):
         with self.nested("waiting for the VM to power off"):
             sys.stdout.flush()
             assert self.process
-            self.process.wait()
+            self.process.wait(
+                timeout=timeout.total_seconds() if timeout is not None else None
+            )
 
             self.pid = None
             self.booted = False
@@ -1809,15 +1811,16 @@ class NspawnMachine(BaseMachine):
 
         # 1. Wait for the directory to actually be created by the container
         self.log(f"Waiting for journal at {journal_path}...")
-        max_attempts = 10
+        warn_after = 10
         attempts = 0
-        while not journal_path.exists() and attempts < max_attempts:
+        while not journal_path.exists():
+            if proc.poll() is not None:
+                self.log(f"Error: Journal directory {journal_path} never appeared.")
+                return
             time.sleep(1)
             attempts += 1
-
-        if not journal_path.exists():
-            self.log(f"Error: Journal directory {journal_path} never appeared.")
-            return
+            if attempts == warn_after:
+                self.log(f"Still waiting for journal at {journal_path}...")
 
         # 2. Start the journalctl process
         # Using a loop here handles cases where journalctl might exit unexpectedly
@@ -1902,7 +1905,7 @@ class NspawnMachine(BaseMachine):
         self.systemctl("poweroff")
         self.wait_for_shutdown()
 
-    def wait_for_shutdown(self) -> None:
+    def wait_for_shutdown(self, timeout: dt.timedelta | None = None) -> None:
         """
         Wait for the container to power off. This does *not* initiate a shutdown;
         that's usually done via `shutdown()`.
@@ -1911,7 +1914,9 @@ class NspawnMachine(BaseMachine):
             return
 
         with self.nested("waiting for the container to power off"):
-            self.process.wait()
+            self.process.wait(
+                timeout=timeout.total_seconds() if timeout is not None else None
+            )
             self.process = None
 
 

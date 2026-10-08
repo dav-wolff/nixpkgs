@@ -1,45 +1,45 @@
 {
   lib,
-  fetchFromGitHub,
-  testers,
-  nix-update-script,
   rustPlatform,
-  rainfrog,
+  fetchFromGitHub,
+  pkg-config,
+  libgit2,
+  versionCheckHook,
+  nix-update-script,
 }:
-let
-  version = "0.4.3";
-in
-rustPlatform.buildRustPackage {
-  inherit version;
+
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "rainfrog";
+  version = "0.4.6";
+
+  __structuredAttrs = true;
 
   src = fetchFromGitHub {
     owner = "achristmascarl";
     repo = "rainfrog";
-    tag = "v${version}";
-    hash = "sha256-rsf6PvLTwtFH2JAnnMfw97D93xhR1IVUfE8NtfgU0Ro=";
+    tag = "v${finalAttrs.version}";
+    hash = "sha256-fcQFHUw1+h1PqmPlanvcFsudUb9nePZA0yJaFOwvx3U=";
   };
 
-  cargoHash = "sha256-y3MU46nfDsFOfST0s2OIatE4IsBwfBNlcZy0U3jmDx8=";
+  cargoHash = "sha256-IXbPCxz+plIa6jYMTRcG44e7sHmwxzA+lbtWb/ukzcU=";
 
-  passthru = {
-    tests.version = testers.testVersion {
-      package = rainfrog;
+  env.LIBGIT2_NO_VENDOR = 1;
 
-      command = ''
-        RAINFROG_DATA="$(mktemp -d)" rainfrog --version
-      '';
-    };
+  nativeBuildInputs = [ pkg-config ];
 
-    updateScript = nix-update-script { };
-  };
+  buildInputs = [ libgit2 ];
+
+  nativeInstallCheckInputs = [ versionCheckHook ];
+  doInstallCheck = true;
+
+  passthru.updateScript = nix-update-script { };
 
   meta = {
-    changelog = "https://github.com/achristmascarl/rainfrog/releases/tag/v${version}";
+    changelog = "https://github.com/achristmascarl/rainfrog/releases/tag/v${finalAttrs.version}";
     description = "Database management TUI for postgres";
     homepage = "https://github.com/achristmascarl/rainfrog";
     license = lib.licenses.mit;
     mainProgram = "rainfrog";
     maintainers = with lib.maintainers; [ patka ];
   };
-}
+})

@@ -15,6 +15,7 @@ let
       sha512,
       updateScript,
       applicationName ? "Thunderbird",
+      broken ? stdenv.buildPlatform.is32bit,
     }:
     (buildMozillaMach rec {
       pname = "thunderbird";
@@ -28,7 +29,14 @@ let
       extraPatches = [
         # The file to be patched is different from firefox's `no-buildconfig-ffx90.patch`.
         (if lib.versionOlder version "140" then ./no-buildconfig.patch else ./no-buildconfig-tb140.patch)
-      ];
+      ]
+      ++
+        lib.optional (lib.versionAtLeast version "154" && lib.versionOlder version "154.0.1")
+          (fetchpatch2 {
+            # Fix Success macros colliding: https://bugzilla.mozilla.org/show_bug.cgi?id=2065007
+            url = "https://github.com/mozilla-firefox/firefox/commit/f0b76eba072821d62e74ebdbd8da9243a2ce3b84.patch";
+            hash = "sha256-PCTmv1ZO7ce4q5fp+WPmy5Wga5OMY4hNzqIZ7iYCcp4=";
+          });
       # FIXME: let's hope that upstream will fix this soon and we can drop this hack again.
       # https://bugzilla.mozilla.org/show_bug.cgi?id=2040877
       extraPostPatch =
@@ -42,6 +50,7 @@ let
         '';
 
       meta = {
+        inherit broken;
         changelog = "https://www.thunderbird.net/en-US/thunderbird/${version}/releasenotes/";
         description = "Full-featured e-mail client";
         homepage = "https://www.thunderbird.net/";
@@ -54,7 +63,6 @@ let
           vcunat
         ];
         platforms = lib.platforms.unix;
-        broken = stdenv.buildPlatform.is32bit;
         # since Firefox 60, build on 32-bit platforms fails with "out of memory".
         # not in `badPlatforms` because cross-compilation on 64-bit machine might work.
         license = lib.licenses.mpl20;
@@ -62,14 +70,14 @@ let
     }).override
       (
         {
-          geolocationSupport = false;
-          webrtcSupport = false;
+          enableLocation = false;
+          enableWebRTC = false;
 
-          pgoSupport = false; # console.warn: feeds: "downloadFeed: network connection unavailable"
+          enablePGO = false; # console.warn: feeds: "downloadFeed: network connection unavailable"
         }
         // lib.optionalAttrs (lib.versionAtLeast version "149") {
           # https://bugzilla.mozilla.org/show_bug.cgi?id=2025767
-          crashreporterSupport = false;
+          enableCrashReporter = false;
         }
       );
 
@@ -78,8 +86,8 @@ rec {
   thunderbird = thunderbird-latest;
 
   thunderbird-latest = common {
-    version = "153.0.2";
-    sha512 = "870d7073919a6dd6357ed0f2caea11ce4374123f4bb99e599ae33956dfe81d1f7cb4b1ef77f85315d843816f9b714d33e71ae355e095a6c7d577b5dea2946844";
+    version = "157.0.1";
+    sha512 = "12c6151150cadce68b113720788ff6d4cdcd39ae57131152f92a272a76c2590fd929edd45faed4e81e1f32eb58d0b22ca003a37294b9daf6648d39194f09fd95";
 
     updateScript = callPackage ./update.nix {
       attrPath = "thunderbirdPackages.thunderbird-latest";
@@ -87,13 +95,13 @@ rec {
   };
 
   # Eventually, switch to an updateScript without versionPrefix hardcoded...
-  thunderbird-esr = thunderbird-140;
+  thunderbird-esr = thunderbird-153;
 
   thunderbird-153 = common {
     applicationName = "Thunderbird ESR";
 
-    version = "153.0.1esr";
-    sha512 = "3773b49b69341aea108a627faa0dd5b7cfb52cdb4c37e625fbb8cbaef7f9166f925ecbc199173302d5bef7994e6bff3b56cd56a3a4c38a9d702cc3e5aeafcf7c";
+    version = "153.4.0esr";
+    sha512 = "93c43a75010b2edd36c58d054cd2e15a879b9e62e21f419bd8c7f97b8f7f6f29e8aed9d445ab9ccebdc1825dbf0f5e82e6e316c5f817f877d64266a2f2dbf9ec";
 
     updateScript = callPackage ./update.nix {
       attrPath = "thunderbirdPackages.thunderbird-153";
@@ -105,14 +113,16 @@ rec {
   thunderbird-140 = common {
     applicationName = "Thunderbird ESR";
 
-    version = "140.13.0esr";
-    sha512 = "778d2fc2837ba367e90c4336f3873da5a0823c182e2f50aa9373cd1ee9ee2b5310372ad9d33e1e11978791b67de4a6952d3036ff7d57b257a06f49c8cd4a830e";
+    version = "140.16.0esr";
+    sha512 = "9844641f9c8b4e7c96445d6d6fc554fc80afd8652899de3458d183f9381a18f08233e5d2e2beedd6adf2a0a6e1331e7abb55e698765b27110ca2dafdf12ecbb7";
 
     updateScript = callPackage ./update.nix {
       attrPath = "thunderbirdPackages.thunderbird-140";
       versionPrefix = "140";
       versionSuffix = "esr";
     };
+
+    broken = true;
   };
 }
 // lib.optionalAttrs config.allowAliases {

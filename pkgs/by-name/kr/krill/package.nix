@@ -2,6 +2,7 @@
   lib,
   rustPlatform,
   fetchFromGitHub,
+  nixosTests,
   openssl,
   pkg-config,
   stdenv,
@@ -36,6 +37,8 @@ rustPlatform.buildRustPackage (finalAttrs: {
   nativeInstallCheckInputs = [ versionCheckHook ];
   versionCheckProgramArg = "--version";
 
+  passthru.tests = { inherit (nixosTests) krill; };
+
   meta = {
     mainProgram = "krillc";
     description = "RPKI Certificate Authority and Publication Server written in Rust";
@@ -48,10 +51,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     homepage = "https://github.com/NLnetLabs/krill";
     changelog = "https://github.com/NLnetLabs/krill/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.mpl20;
-    maintainers = with lib.maintainers; [
-      steamwalker
-      stepbrobd
-    ];
+    maintainers = with lib.maintainers; [ stepbrobd ];
     teams = [ lib.teams.ngi ];
   };
 })

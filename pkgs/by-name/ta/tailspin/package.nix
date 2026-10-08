@@ -2,6 +2,7 @@
   lib,
   rustPlatform,
   fetchFromGitHub,
+  installShellFiles,
   stdenv,
   versionCheckHook,
   nix-update-script,
@@ -9,20 +10,27 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "tailspin";
-  version = "5.5.0";
+  version = "6.1.0";
 
   src = fetchFromGitHub {
     owner = "bensadeh";
     repo = "tailspin";
     tag = finalAttrs.version;
-    hash = "sha256-coatx8Ud6iLnXvr+/X9hUEe3+0j9jnP5N3+aHQ+eWV8=";
+    hash = "sha256-9+uu9q9tGIWFnyYpy+HHD5UUCsxUDLRlZlo0Ap4ezsY=";
   };
 
-  cargoHash = "sha256-7N/vkhytkDF2ef0T6RJv8YzCpjzi+hjg061Uz9dyEM0=";
+  cargoHash = "sha256-C3OORW5aeDrRDTlfvRNW3RLE0p8wFs1qbIKl/XpzThs=";
+
+  nativeBuildInputs = [ installShellFiles ];
 
   postPatch = ''
     substituteInPlace tests/utils.rs --replace-fail \
       'target/debug' "target/${stdenv.hostPlatform.rust.rustcTargetSpec}/$cargoCheckType"
+  '';
+
+  postInstall = ''
+    installShellCompletion completions/tspin.{bash,fish,zsh}
+    installManPage man/tspin.1
   '';
 
   nativeInstallCheckInputs = [ versionCheckHook ];

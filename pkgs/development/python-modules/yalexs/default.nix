@@ -21,16 +21,16 @@
   typing-extensions,
 }:
 
-buildPythonPackage rec {
+buildPythonPackage (finalAttrs: {
   pname = "yalexs";
-  version = "9.2.10";
+  version = "9.2.13";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "bdraco";
     repo = "yalexs";
-    tag = "v${version}";
-    hash = "sha256-EKqHPzNtEh2CplWjMPI8ZAMPnD2/3uEBNKoMyKBiGbU=";
+    tag = "v${finalAttrs.version}";
+    hash = "sha256-KJgXxefAkFI6AmIkd6B2O7Iw017UPd/SV7AxV+JOkwM=";
   };
 
   build-system = [ poetry-core ];
@@ -70,8 +70,8 @@ buildPythonPackage rec {
   meta = {
     description = "Python API for Yale Access (formerly August) Smart Lock and Doorbell";
     homepage = "https://github.com/bdraco/yalexs";
-    changelog = "https://github.com/bdraco/yalexs/blob/${src.tag}/CHANGELOG.md";
+    changelog = "https://github.com/bdraco/yalexs/blob/${finalAttrs.src.tag}/CHANGELOG.md";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ fab ];
   };
-}
+})

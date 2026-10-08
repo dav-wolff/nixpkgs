@@ -6,7 +6,7 @@
   django,
   django-appconf,
   pytestCheckHook,
-  pytest-cov,
+  pytest-cov-stub,
   pytest-django,
   selenium,
 }:
@@ -31,7 +31,7 @@ buildPythonPackage (finalAttrs: {
 
   nativeCheckInputs = [
     pytestCheckHook
-    pytest-cov
+    pytest-cov-stub
     pytest-django
     selenium
   ];

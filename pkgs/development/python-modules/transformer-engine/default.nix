@@ -15,6 +15,7 @@
   # build-system
   cmake,
   ninja,
+  nvidia-cudnn-frontend,
   pybind11,
   setuptools,
   # jax-only
@@ -22,6 +23,9 @@
   jax,
   # pytorch-only:
   torch,
+
+  # buildInputs
+  nlohmann_json,
 
   # dependencies
   importlib-metadata,
@@ -82,7 +86,7 @@ let
 in
 buildPythonPackage.override { stdenv = backendStdenv; } (finalAttrs: {
   pname = "transformer-engine";
-  version = "2.17.1";
+  version = "2.20.2";
   pyproject = true;
   __structuredAttrs = true;
 
@@ -92,7 +96,7 @@ buildPythonPackage.override { stdenv = backendStdenv; } (finalAttrs: {
     tag = "v${finalAttrs.version}";
     # Their CMakeLists.txt does not easily let us inject dependencies
     fetchSubmodules = true;
-    hash = "sha256-W9aWSmYCV7wYrLSAlYE2prfPfucXkPjWGA7NAMfBJ9E=";
+    hash = "sha256-YXo0LIq13HNVrYa19npDoLRrB2NY4IjZb3E+asblBnQ=";
   };
 
   patches = optionals cudaSupport [
@@ -114,7 +118,7 @@ buildPythonPackage.override { stdenv = backendStdenv; } (finalAttrs: {
     ''
       substituteInPlace pyproject.toml \
         --replace-fail "pybind11[global]" "pybind11" \
-        --replace-fail '"pip", "torch>=2.1", "jax>=0.5.0", "flax>=0.7.1"' ""
+        --replace-fail '"pip", "torch>=2.1", "jax>=0.5.0", "flax>=0.7.1",' ""
     ''
     # Hardcode the path to the output store path that transformer_engine will use to import
     # - libtransformer_engine.so
@@ -127,16 +131,13 @@ buildPythonPackage.override { stdenv = backendStdenv; } (finalAttrs: {
           'te_path = Path(importlib.util.find_spec("transformer_engine").origin).parent.parent' \
           'te_path = Path("${placeholder "out"}/${python.sitePackages}")'
     ''
-    # nccl-ep is built from the vendored `3rdparty/nccl` submodule (see the NCCL_EP_* CMake
-    # variables in `transformer_engine/common/CMakeLists.txt`), which pins a newer NCCL than
-    # `cudaPackages.nccl-ep` provides.
-    # Only `libnccl_ep.a` is consumed (whole-archive), so skip the shared library, which would
-    # otherwise need `-lnccl -lcuda` on the link line.
-    + optionalString withNcclEp ''
-      substituteInPlace 3rdparty/nccl/contrib/nccl_ep/Makefile \
+    # The vendored NCCL probes for `nvcc` with `which`, which is not available in the sandbox, so
+    # the CUDA version it derives (passed as `-DCUDA_MAJOR`/`-DCUDA_MINOR`) comes out empty.
+    + ''
+      substituteInPlace 3rdparty/nccl-extensions/third_party/nccl/makefiles/common.mk \
         --replace-fail \
-          'lib: $(LIBTARGET) $(SOLIBTARGET) $(SOLIBLINKS) $(HEADER_TARGETS)' \
-          'lib: $(LIBTARGET) $(HEADER_TARGETS)'
+          'which $(NVCC) >/dev/null' \
+          'command -v $(NVCC) >/dev/null'
     '';
 
   # https://github.com/NVIDIA/TransformerEngine/blob/main/docs/envvars.rst
@@ -165,6 +166,9 @@ buildPythonPackage.override { stdenv = backendStdenv; } (finalAttrs: {
     CUDA_HOME = optionalString withNcclEp (getBin cudaPackages.cuda_nvcc).outPath;
     CUDA_INC = optionalString withNcclEp "${getInclude cudaPackages.cuda_cudart}/include";
     CUDA_LIB = optionalString withNcclEp "${getLib cudaPackages.cuda_cudart}/lib";
+    # `libnccl_ep.so` is linked with `-lcuda`, which is only provided by the GPU driver at run
+    # time. Link against the cudart stub instead.
+    LDFLAGS = optionalString withNcclEp "-L${getLib cudaPackages.cuda_cudart}/lib/stubs";
 
     NVTE_UB_WITH_MPI = if withMpi then 1 else 0;
     # NOTE: Make sure to use mpi from buildPackages to match the spliced version created through nativeBuildInputs.
@@ -180,6 +184,7 @@ buildPythonPackage.override { stdenv = backendStdenv; } (finalAttrs: {
   build-system = [
     cmake
     ninja
+    nvidia-cudnn-frontend
     pybind11
     setuptools
   ]
@@ -217,6 +222,7 @@ buildPythonPackage.override { stdenv = backendStdenv; } (finalAttrs: {
     cudaPackages.libcusolver # cusolverDn.h
     cudaPackages.libcusparse # cusparse.h
     cudaPackages.nccl # nccl.h
+    nlohmann_json
     pybind11 # pybind11/pybind11.h
   ]
   ++ optionals withMpi [
@@ -298,6 +304,7 @@ buildPythonPackage.override { stdenv = backendStdenv; } (finalAttrs: {
     changelog = "https://github.com/NVIDIA/TransformerEngine/releases/tag/${finalAttrs.src.tag}";
     license = lib.licenses.asl20;
     maintainers = with lib.maintainers; [ GaetanLepage ];
+    teams = [ lib.teams.cuda ];
     broken = !cudaSupport;
   };
 })

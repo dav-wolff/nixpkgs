@@ -8,13 +8,13 @@
 }:
 let
   pname = "open-webui";
-  version = "0.11.0";
+  version = "0.11.4";
 
   src = fetchFromGitHub {
     owner = "open-webui";
     repo = "open-webui";
     tag = "v${version}";
-    hash = "sha256-SP5Huefj35PHvVzqS8R/DGSBci/hCHoueEb5RupGVqY=";
+    hash = "sha256-Z7pc1o6AK9XySZLYF8YNSnHyrp85nh8ZmiCw4FWCwW8=";
   };
 
   # we need datasets_3 for SpeechT5 embeddings
@@ -35,7 +35,7 @@ let
       url = "https://github.com/pyodide/pyodide/releases/download/${pyodideVersion}/pyodide-${pyodideVersion}.tar.bz2";
     };
 
-    npmDepsHash = "sha256-9Wa6gP0asGPCoBJh8ufpweOg4zNf7onzBu08iQwgqis=";
+    npmDepsHash = "sha256-hdgWZAJstRqYtzNuCTeiRIi+rjRsogulSfWXr8EP2UI=";
 
     npmFlags = [ "--force" ];
 
@@ -122,6 +122,7 @@ python3Packages.buildPythonApplication (finalAttrs: {
       google-auth-oauthlib
       google-cloud-storage
       google-genai
+      google-re2
       googleapis-common-protos
       hiredis
       httpx
@@ -168,6 +169,7 @@ python3Packages.buildPythonApplication (finalAttrs: {
       pymysql
       pypandoc
       pypdf
+      python-docx
       python-dotenv
       python-mimeparse
       python-multipart
@@ -220,7 +222,6 @@ python3Packages.buildPythonApplication (finalAttrs: {
       azure-search-documents
       colbert-ai
       elasticsearch
-      moto
       oracledb
       pinecone
       playwright
@@ -231,8 +232,7 @@ python3Packages.buildPythonApplication (finalAttrs: {
     ]
     ++ finalAttrs.passthru.optional-dependencies.mariadb
     ++ finalAttrs.passthru.optional-dependencies.postgres
-    ++ finalAttrs.passthru.optional-dependencies.unstructured
-    ++ moto.optional-dependencies.s3;
+    ++ finalAttrs.passthru.optional-dependencies.unstructured;
   };
 
   pythonImportsCheck = [ "open_webui" ];
@@ -254,7 +254,8 @@ python3Packages.buildPythonApplication (finalAttrs: {
     # License history is complex: originally MIT, then a potentially problematic
     # relicensing to a modified BSD-3 clause occurred around v0.5.5/v0.6.6.
     # Due to these concerns and non-standard terms, it's treated as custom non-free.
-    license = {
+    license = lib.licenses.mkLicense {
+      shortName = "openWebUI";
       fullName = "Open WebUI License";
       url = "https://github.com/open-webui/open-webui/blob/0cef844168e97b70de2abee4c076cc30ffec6193/LICENSE";
       # Marked non-free due to concerns over the MIT -> modified BSD-3 relicensing process,

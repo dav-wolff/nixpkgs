@@ -33,6 +33,7 @@
   dbus,
   gvfs,
   libheif,
+  libgphoto2,
   glib-networking,
   nodejs_24,
   npmHooks,
@@ -43,20 +44,20 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "rapidraw";
-  version = "1.6.1";
+  version = "1.6.4";
 
   src = fetchFromGitHub {
     owner = "CyberTimon";
     repo = "RapidRAW";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-+sV8XRK+rBVKB6AdoGuz7q6bYtz8HwnVZghK3JjGFes=";
+    hash = "sha256-OSIFBX52QOez2tn93XcSLP/oP9krPy/rIEBvhINkjS8=";
   };
 
-  cargoHash = "sha256-QItJQ7POtH+SRr5pyLJAWD4wx+fRpx1JI/KK6KIgNT8=";
+  cargoHash = "sha256-B1W6buXovnvIddQWjBLw1uOgQnoZLtJp1dX4gOg7cAQ=";
 
   npmDeps = fetchNpmDeps {
     inherit (finalAttrs) src;
-    hash = "sha256-DXz+An1LzPiHM8rY+7KdrsieimAjwPYJBiGSa624SE0=";
+    hash = "sha256-P1YT5agK1hMVpe7pLXkWrK99g/uAA46ovF+mUe+xVhk=";
   };
 
   nativeBuildInputs = [
@@ -66,6 +67,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     nodejs_24
     npmHooks.npmConfigHook
     cargo-tauri.hook
+    rustPlatform.bindgenHook
     writableTmpDirAsHomeHook
   ];
 
@@ -96,6 +98,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     libheif
     onnxruntime
     wrapGAppsHook4
+    libgphoto2
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [
     webkitgtk_4_1
@@ -118,6 +121,11 @@ rustPlatform.buildRustPackage (finalAttrs: {
     substituteInPlace src-tauri/build.rs \
       --replace-fail 'if !is_valid' 'if false'
   '';
+
+  tauriBuildFlags = [
+    "--features"
+    "tethering"
+  ];
 
   dontWrapGApps = true;
 

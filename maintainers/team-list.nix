@@ -91,6 +91,10 @@ with lib.maintainers;
     shortName = "Blockchains";
   };
 
+  boot-security = {
+    github = "boot-security";
+  };
+
   budgie = {
     members = [
       bobby285271
@@ -104,7 +108,6 @@ with lib.maintainers;
     members = [
       lopsided98
       mic92
-      zowoq
     ];
     scope = "Maintain Buildbot CI framework";
     shortName = "Buildbot";
@@ -288,6 +291,10 @@ with lib.maintainers;
     github = "freedesktop";
   };
 
+  gaming = {
+    github = "gaming";
+  };
+
   gcc = {
     members = [
       vcunat
@@ -321,13 +328,7 @@ with lib.maintainers;
   };
 
   gnome-circle = {
-    members = [
-      aleksana
-      getchoo
-      michaelgrahamevans
-    ];
-    scope = "Maintain GNOME Circle applications.";
-    shortName = "GNOME Circle";
+    github = "gnome-circle";
   };
 
   golang = {
@@ -402,6 +403,7 @@ with lib.maintainers;
       GaetanLepage
       natsukium
       thomasjm
+      haansn08
     ];
     scope = "Maintain Jupyter and related packages.";
     shortName = "Jupyter";
@@ -710,7 +712,6 @@ with lib.maintainers;
 
   sage = {
     members = [
-      timokau
       raskin
       collares
     ];
@@ -753,7 +754,7 @@ with lib.maintainers;
 
   swift = {
     members = [
-      dduan
+      reckenrode
       samasaur
       stephank
     ];

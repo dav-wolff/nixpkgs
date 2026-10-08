@@ -1,10 +1,11 @@
 {
   buildDotnetModule,
   fetchFromGitLab,
+  fetchurl,
   dotnetCorePackages,
   lib,
   ffmpeg,
-  curl-impersonateFull,
+  curl-impersonate,
   libsodium,
   sqlite,
   libz,
@@ -44,17 +45,22 @@
   _experimental-update-script-combinators,
   grayjay-frontend,
   grayjay-libcurlshim,
+  unzip,
 }:
 let
-  version = "17";
+  version = "18";
   src = fetchFromGitLab {
     domain = "gitlab.futo.org";
     owner = "videostreaming";
     repo = "Grayjay.Desktop";
     tag = version;
-    hash = "sha256-/oeoLXKewjYkCO7naZNOzauWm1OYDKnsxXY9EkI7fTM=";
+    hash = "sha256-dhXUjj9x8v1bfHLPxNtcysj/eKeT3kkSeVuX6PKoykE=";
     fetchSubmodules = true;
     fetchLFS = true;
+  };
+  justcefNative = fetchurl {
+    url = "https://static.grayjay.app/justcef/1/JustCefNative-linux-x64.zip";
+    hash = "sha256-LXOp+QZZcWBd8eP+BpK++AMBo9303+aIDEEYNVWekhE=";
   };
   getLibrary =
     pkg: libnm:
@@ -81,13 +87,14 @@ buildDotnetModule (finalAttrs: {
     nss
     icu
     krb5
-    curl-impersonateFull
+    curl-impersonate
   ];
 
   nativeBuildInputs = [
     autoPatchelfHook
     wrapGAppsHook3
     copyDesktopItems
+    unzip
   ];
 
   dontWrapGApps = true;
@@ -108,11 +115,15 @@ buildDotnetModule (finalAttrs: {
     "Grayjay.Engine/Grayjay.Engine/Grayjay.Engine.csproj"
     "Grayjay.Desktop.CEF/Grayjay.Desktop.CEF.csproj"
     "FUTO.MDNS/FUTO.MDNS/FUTO.MDNS.csproj"
-    "JustCef/DotCef.csproj"
+    "JustCef/JustCef.csproj"
   ];
 
   testProjectFile = [
     "Grayjay.Engine/Grayjay.Engine.Tests/Grayjay.Engine.Tests.csproj"
+  ];
+
+  dotnetBuildFlags = [
+    "-p:AssemblyVersion=1.${version}.0.0"
   ];
 
   nugetDeps = ./deps.json;
@@ -134,6 +145,10 @@ buildDotnetModule (finalAttrs: {
   preBuild = ''
     rm -r Grayjay.ClientServer/wwwroot/web
     cp -r ${grayjay-frontend} Grayjay.ClientServer/wwwroot/web
+
+    mkdir -p JustCef/obj/justcef/net8.0/1/linux-x64
+    cp ${justcefNative} \
+      JustCef/obj/justcef/net8.0/1/linux-x64/JustCefNative-linux-x64.zip
   '';
 
   postInstall = ''
@@ -143,13 +158,13 @@ buildDotnetModule (finalAttrs: {
     # Unvendor most stuff
     rm -f $out/lib/grayjay/{Portable,ffmpeg,libcurl-impersonate.so,libcurlshim.so,libsodium.so,libe_sqlite3.so,FUTO.Updater.Client}
     ln -s ${lib.getExe ffmpeg} $out/lib/grayjay/ffmpeg
-    ln -s ${getLibrary curl-impersonateFull "curl-impersonate"} $out/lib/grayjay/libcurl-impersonate.so
+    ln -s ${getLibrary curl-impersonate "curl-impersonate"} $out/lib/grayjay/libcurl-impersonate.so
     ln -s ${getLibrary grayjay-libcurlshim "curlshim"} $out/lib/grayjay/libcurlshim.so
     ln -s ${getLibrary libsodium "sodium"} $out/lib/grayjay/libsodium.so
     ln -s ${getLibrary sqlite "sqlite3"} $out/lib/grayjay/libe_sqlite3.so
 
-    # CEF is still vendored for now
-    chmod +x $out/lib/grayjay/cef/dotcefnative
+    # Explicitly fetched and copied over in preBuild
+    chmod +x $out/lib/grayjay/cef/justcefnative
 
     mkdir -p $out/share/icons/hicolor/scalable/apps
     ln -s $out/lib/grayjay/grayjay.png $out/share/icons/hicolor/scalable/apps/grayjay.png

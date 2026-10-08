@@ -14,13 +14,13 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "frei0r-plugins";
-  version = "3.2.1";
+  version = "3.5.0";
 
   src = fetchFromGitHub {
     owner = "dyne";
     repo = "frei0r";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-eBaaEE+4mKYr5VCXUnoS/4aE6EV8DnXFJLFYsrk3gs0=";
+    hash = "sha256-M1qdv4DVYDhvcXIWsgevMGR7f2P4KvyaK8FYpm50Juk=";
   };
 
   strictDeps = true;

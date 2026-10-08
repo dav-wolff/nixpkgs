@@ -13,14 +13,14 @@
 
 buildPythonPackage (finalAttrs: {
   pname = "microsoft-kiota-serialization-json";
-  version = "1.11.8";
+  version = "1.14.2";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "microsoft";
     repo = "kiota-python";
     tag = "microsoft-kiota-serialization-json-v${finalAttrs.version}";
-    hash = "sha256-KF3KRcD8KP7MFtw5SgP84UVxNxOnW/VzEGmM92V16GE=";
+    hash = "sha256-vnAKHQ2EdHhje7Fdpi7VH9c6j9ZSxSWHumFKSDmfqSI=";
   };
 
   sourceRoot = "${finalAttrs.src.name}/packages/serialization/json/";
