@@ -94,13 +94,14 @@ in
 
     services.nginx = mkIf (cfg.virtualHost != null) {
       enable = true;
-      # https://github.com/FuzzyGrim/Yamtrack/blob/v0.25.0/nginx.conf
+      # https://github.com/FuzzyGrim/Yamtrack/blob/v0.26.3/nginx.conf
       virtualHosts.${cfg.virtualHost} = {
         serverName = lib.mkIf (cfg.virtualHost == "yamtrack") (lib.mkDefault "yamtrack.localhost");
         extraConfig = ''
-          add_header X-Frame-Options "SAMEORIGIN" always;
-          add_header X-Content-Type-Options "nosniff" always;
-          add_header Referrer-Policy "no-referrer-when-downgrade" always;
+          more_set_headers
+              'X-Frame-Options: "SAMEORIGIN" always'
+              'X-Content-Type-Options: "nosniff" always'
+              'Referrer-Policy: "no-referrer-when-downgrade" always';
         '';
 
         locations = {
@@ -112,11 +113,7 @@ in
             alias = "${cfg.package.staticFiles}/";
             extraConfig = ''
               expires 30d;
-              add_header Cache-Control "public";
-
-              add_header X-Frame-Options "SAMEORIGIN" always;
-              add_header X-Content-Type-Options "nosniff" always;
-              add_header Referrer-Policy "no-referrer-when-downgrade" always;
+              more_set_headers 'Cache-Control: "public"';
             '';
           };
         };
