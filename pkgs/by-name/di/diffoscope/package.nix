@@ -112,12 +112,12 @@ in
 # Note: when upgrading this package, please run the list-missing-tools.sh script as described below!
 python.pkgs.buildPythonApplication rec {
   pname = "diffoscope";
-  version = "332";
+  version = "334";
   pyproject = true;
 
   src = fetchurl {
     url = "https://diffoscope.org/archive/diffoscope-${version}.tar.bz2";
-    hash = "sha256-eNmrIxt0yQlby20WRXgKBVXZ2jNnNLpksOvr25dXJvI=";
+    hash = "sha256-3fBgV4f3POKeuqAsHw3zoHv7Ub9d+IL4zytEWUhmv8A=";
   };
 
   outputs = [
@@ -126,7 +126,6 @@ python.pkgs.buildPythonApplication rec {
   ];
 
   patches = [
-    ./androguard-4.1.4.patch
     ./ignore_links.patch
   ];
 
@@ -277,10 +276,16 @@ python.pkgs.buildPythonApplication rec {
 
   makeWrapperArgs = lib.optionals enableBloat (
     [
-      "--prefix PATH : ${lib.makeBinPath [ hdf5 ]}"
+      "--prefix"
+      "PATH"
+      ":"
+      (lib.makeBinPath [ hdf5 ])
     ]
     ++ lib.optionals stdenv.hostPlatform.isDarwin [
-      "--prefix DYLD_LIBRARY_PATH : ${lib.makeLibraryPath [ hdf5 ]}"
+      "--prefix"
+      "DYLD_LIBRARY_PATH"
+      ":"
+      (lib.makeLibraryPath [ hdf5 ])
     ]
   );
 

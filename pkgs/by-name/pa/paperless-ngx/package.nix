@@ -22,7 +22,7 @@
   extraPythonPackageOverrides ? (_final: _prev: { }),
 }:
 let
-  defaultPythonPackageOverrides = final: prev: {
+  defaultPythonPackageOverrides = _final: prev: {
     django = prev.django_5;
 
     # tesseract5 may be overwritten in the paperless module and we need to propagate that to make the closure reduction effective
@@ -59,14 +59,14 @@ let
 in
 pythonPackages.buildPythonApplication (finalAttrs: {
   pname = "paperless-ngx";
-  version = "3.3.0";
+  version = "3.3.4";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "paperless-ngx";
     repo = "paperless-ngx";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-a46gdO5gjPF2Zo+oinfAbKibBgy4UrXTV55HtslyoTk=";
+    hash = "sha256-KUDQ75CJc30Cjyx1UpKKzcN2erYv7gQ/q2H2wI4I6aY=";
   };
 
   postPatch = ''
@@ -84,6 +84,7 @@ pythonPackages.buildPythonApplication (finalAttrs: {
 
   pythonRelaxDeps = [
     "django-allauth"
+    "python-ipware"
     "redis"
     "regex"
     "turbohtml"
@@ -167,7 +168,7 @@ pythonPackages.buildPythonApplication (finalAttrs: {
     ++ django-allauth.optional-dependencies.mfa
     ++ django-allauth.optional-dependencies.socialaccount
     ++ gotenberg-client.optional-dependencies.httpx
-    ++ ocrmypdf.optional-dependencies.heic or [ ]
+    ++ ocrmypdf.optional-dependencies.heic
     ++ redis.optional-dependencies.hiredis
     ++ tika-client.optional-dependencies.httpx
     ++ whoosh-compat.optional-dependencies.tantivy;

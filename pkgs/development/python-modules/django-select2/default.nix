@@ -12,14 +12,14 @@
 }:
 buildPythonPackage (finalAttrs: {
   pname = "django-select2";
-  version = "8.6.0";
+  version = "8.6.1";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "codingjoe";
     repo = "django-select2";
     tag = finalAttrs.version;
-    hash = "sha256-lz+vjVSPBS0FTjmc/EiD+5dYSwSQImenG88qQG+5AAM=";
+    hash = "sha256-7TzYcUTsZsXqvYeywwFUBmc/So3/rBVfS6QLRwxK938=";
   };
 
   build-system = [ flit-scm ];
