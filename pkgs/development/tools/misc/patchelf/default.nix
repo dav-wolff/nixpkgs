@@ -11,11 +11,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "patchelf";
-  version = "0.15.2";
+  version = "0.19.2";
 
   src = fetchurl {
     url = "https://github.com/NixOS/patchelf/releases/download/${finalAttrs.version}/patchelf-${finalAttrs.version}.tar.bz2";
-    hash = "sha256-F3RfVkFZyOIo/EEtplogSLhGxLa0Igt3y/IkFuAvLXw=";
+    hash = "sha256-1K2aTlxongkRnOLzCpSw6LT5jHhZASPqIWZeNMaSiAE=";
   };
 
   strictDeps = true;
@@ -30,9 +30,10 @@ stdenv.mkDerivation (finalAttrs: {
   __structuredAttrs = true;
 
   meta = {
+    changelog = "https://github.com/NixOS/patchelf/blob/${finalAttrs.version}/ChangeLog.md";
+    description = "Small utility to modify the dynamic linker and RPATH of ELF executables";
     homepage = "https://github.com/NixOS/patchelf";
     license = lib.licenses.gpl3Plus;
-    description = "Small utility to modify the dynamic linker and RPATH of ELF executables";
     mainProgram = "patchelf";
     maintainers = [ ];
     platforms = lib.platforms.all;

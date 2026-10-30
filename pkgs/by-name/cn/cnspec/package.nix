@@ -9,18 +9,18 @@
 
 buildGoModule (finalAttrs: {
   pname = "cnspec";
-  version = "13.36.0";
+  version = "14.8.0";
 
   src = fetchFromGitHub {
     owner = "mondoohq";
     repo = "cnspec";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-KDubdJ+OgXRxe2DX/8lDGITdl57ViZ8FPgrNNefKI3I=";
+    hash = "sha256-RFpNtp5W3OadZwkY2sRvPSeIBl6JvQtTWDdqCw5aokI=";
   };
 
   proxyVendor = true;
 
-  vendorHash = "sha256-2YccHGxnVz/4sHAjmOSSJ+W3tAKVQOPTl0NchKycHjI=";
+  vendorHash = "sha256-46GaMnpXPiM8ra7LC2drUylB20VxNriYIHNeVaYA+pI=";
 
   subPackages = [ "apps/cnspec" ];
 
@@ -32,7 +32,7 @@ buildGoModule (finalAttrs: {
 
   ldflags = [
     "-s"
-    "-X=go.mondoo.com/cnspec/v${(lib.versions.major finalAttrs.version)}.Version=${finalAttrs.version}"
+    "-X=go.mondoo.com/cnspec.Version=${finalAttrs.version}"
   ];
 
   doInstallCheck = true;

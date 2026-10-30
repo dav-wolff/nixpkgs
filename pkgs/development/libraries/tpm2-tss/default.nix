@@ -10,7 +10,6 @@
   openssl,
   json_c,
   curl,
-  libgcrypt,
   cmocka,
   uthash,
   swtpm,
@@ -58,7 +57,6 @@ stdenv.mkDerivation (finalAttrs: {
     openssl
     json_c
     curl
-    libgcrypt
     uthash
     libuuid
     libtpms
@@ -128,6 +126,9 @@ stdenv.mkDerivation (finalAttrs: {
       "--disable-policy"
       # uses fallocate
       "--disable-tcti-libtpms"
+    ]
+    ++ lib.optionals stdenv.hostPlatform.isStatic [
+      "--enable-nodl"
     ];
 
   postInstall = ''

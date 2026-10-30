@@ -7,7 +7,9 @@
   cmake,
   installShellFiles,
   versionCheckHook,
+  _experimental-update-script-combinators,
   nix-update-script,
+  python3,
   enableShared ? !stdenv.hostPlatform.isStatic,
   enableStatic ? stdenv.hostPlatform.isStatic,
   variant ? "main",
@@ -15,17 +17,19 @@
 let
   sources = {
     lts-36 = {
-      version = "36.0.14";
-      hash = "sha256-OI8wixfzV4U2brmW7uqhk55eLhj+Fdp+J5Pzz1iBO6U=";
-      cargoHash = "sha256-2Nwcw3Z4/cbkRcG2hJ2/1PcXZf3vYB9NGUlr7pxdqzU=";
+      version = "36.0.19";
+      hash = "sha256-zp/BEh1uWaDEGeyqZUZ4PyNGzMDx1hUruMS499yEJA8=";
+      cargoHash = "sha256-h5qEnyhIDxZIbvuiQ/kKZvxcRwynHm18X2jQcY/ChgE=";
     };
     main = {
-      version = "48.0.0";
-      hash = "sha256-WGnDC7iTEK2eLD1rPIy2jgbrsamWT7fElRwoy+EZ0dg=";
-      cargoHash = "sha256-cYv+Ml8xgukxwnHVge6swtC0Ul5Vt2+diUini4C61eo=";
+      version = "50.0.0";
+      hash = "sha256-s0DWWCZLEdKf2joTn+QghgfWkJ6Vy4oCxgdB/0/QQlM=";
+      cargoHash = "sha256-lRH/UVGykOT0rwMQ2S/MpEUMVmIa172NWNKzTPdejLo=";
     };
   };
   source = sources.${variant};
+  # there is no LTS version of python3Packages.wasmtime yet
+  hasPythonBinding = variant == "main";
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "wasmtime";
@@ -112,12 +116,24 @@ rustPlatform.buildRustPackage (finalAttrs: {
   doInstallCheck = true;
 
   passthru = {
-    updateScript = nix-update-script {
-      extraArgs = [
-        "--version-regex"
-        "^v(\\d+\\.\\d+\\.\\d+)$"
-      ];
+    tests = lib.optionalAttrs hasPythonBinding {
+      python3-wasmtime = python3.pkgs.wasmtime;
     };
+    updateScript = _experimental-update-script-combinators.sequence (
+      [
+        (nix-update-script {
+          extraArgs = [
+            "--version-regex"
+            "^v(\\d+\\.\\d+\\.\\d+)$"
+          ];
+        })
+      ]
+      ++ lib.optionals hasPythonBinding [
+        (nix-update-script {
+          attrPath = "python3.pkgs.wasmtime";
+        })
+      ]
+    );
   };
 
   meta = {

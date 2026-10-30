@@ -7,11 +7,11 @@
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "pcre2";
-  version = "10.47";
+  version = "10.49";
 
   src = fetchurl {
     url = "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-${finalAttrs.version}/pcre2-${finalAttrs.version}.tar.bz2";
-    hash = "sha256-R/6MmUYSUNQviebo/a66naBXhV0G63/AjZygP9CNe8c=";
+    hash = "sha256-U8FW4bpBaiDajmU5XaoTLaDYDnaRBCTKyj/Nrngx04Q=";
   };
 
   __structuredAttrs = true;

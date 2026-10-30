@@ -12,14 +12,14 @@
 
 buildPythonPackage rec {
   pname = "pyanglianwater";
-  version = "3.3.1";
+  version = "3.3.3";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "pantherale0";
     repo = "pyanglianwater";
     tag = version;
-    hash = "sha256-q7YCFlnWIQPjn3COoWdx/ASd4fY1C026YVsnfJ+vA+g=";
+    hash = "sha256-3gkRk4zFYa6UdGueXsWaiuyZkRyk4QZyjhT8SvfYFsA=";
   };
 
   postPatch = ''

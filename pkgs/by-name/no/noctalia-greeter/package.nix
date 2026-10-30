@@ -14,9 +14,11 @@
   freetype,
   glib,
   libGL,
+  libjxl,
   librsvg,
   libwebp,
   libxkbcommon,
+  libxml2,
   nlohmann_json,
   pango,
   stb,
@@ -25,12 +27,13 @@
   wayland-protocols,
   wlroots_0_20,
 
+  versionCheckHook,
   nix-update-script,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "noctalia-greeter";
-  version = "1.2.1";
+  version = "1.7.0";
 
   __structuredAttrs = true;
   strictDeps = true;
@@ -39,7 +42,7 @@ stdenv.mkDerivation (finalAttrs: {
     owner = "noctalia-dev";
     repo = "noctalia-greeter";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-k/qCnifAoBqpHkRPYn6nUfEoRV1HXac01+Fh4aouWIE=";
+    hash = "sha256-ILFIjvpGFxwt6y9GDESlNcVm2t0Q2Ku108vWiqCsWfM=";
   };
 
   nativeBuildInputs = [
@@ -56,9 +59,11 @@ stdenv.mkDerivation (finalAttrs: {
     freetype
     glib
     libGL
+    libjxl
     librsvg
     libwebp
     libxkbcommon
+    libxml2
     nlohmann_json
     pango
     stb
@@ -66,6 +71,12 @@ stdenv.mkDerivation (finalAttrs: {
     wayland
     wayland-protocols
     wlroots_0_20
+  ];
+
+  doInstallCheck = stdenv.buildPlatform.canExecute stdenv.hostPlatform;
+  versionCheckProgram = "${placeholder "out"}/bin/noctalia-greeter";
+  nativeInstallCheckInputs = [
+    versionCheckHook
   ];
 
   passthru.updateScript = nix-update-script { };
@@ -76,6 +87,7 @@ stdenv.mkDerivation (finalAttrs: {
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [
       dtomvan
+      pyrox0
       samiser
       spacedentist
     ];

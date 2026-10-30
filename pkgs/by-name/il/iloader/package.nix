@@ -22,13 +22,13 @@ rustPlatform.buildRustPackage (finalAttrs: {
   __structuredAttrs = true;
 
   pname = "iloader";
-  version = "2.3.1";
+  version = "2.4.0";
 
   src = fetchFromGitHub {
     owner = "nab138";
     repo = "iloader";
     rev = "v${finalAttrs.version}";
-    sha256 = "sha256-OgSDkFaOwhsEhFLceV0FxcZ8jEG9vy5fKQf9gSyUpNA=";
+    sha256 = "sha256-fiMLl0OkG9/+T/gEIAeK23TrPOQzm5e0yk6oX9VFsr8=";
   };
 
   nodeModules = stdenv.mkDerivation {
@@ -64,14 +64,14 @@ rustPlatform.buildRustPackage (finalAttrs: {
       runHook postInstall
     '';
 
-    outputHash = "sha256-Le0Fn/Vdvq9RitDfDVyHl8VBCA+j068ywhiyM+JLg94=";
+    outputHash = "sha256-v6Hy3fmbpArVJh0YLJZGKH65nXiWPMjUsu1nPKdHlQ8=";
     outputHashAlgo = "sha256";
     outputHashMode = "recursive";
   };
 
   cargoRoot = "src-tauri";
   buildAndTestSubdir = "src-tauri";
-  cargoHash = "sha256-CJSm6NAdXEUwhmbx48o7tnZALQtuvhUxUpa7KtC9ZHg=";
+  cargoHash = "sha256-hn+TQtDLs8/JA/XH4w8rPjC7vujJ1OzX5k80koeZ2s8=";
 
   doCheck = false;
 
@@ -118,7 +118,10 @@ rustPlatform.buildRustPackage (finalAttrs: {
     homepage = "https://github.com/nab138/iloader";
     license = lib.licenses.mit;
     mainProgram = "iloader";
-    maintainers = with lib.maintainers; [ ern775 ];
+    maintainers = with lib.maintainers; [
+      ern775
+      mirdukkkkk
+    ];
     platforms = [
       "aarch64-linux"
       "x86_64-linux"

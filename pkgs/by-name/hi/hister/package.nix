@@ -14,19 +14,18 @@
 }:
 buildGoModule (finalAttrs: {
   pname = "hister";
-  version = "0.18.0";
+  version = "0.21.0";
 
   src = fetchFromGitHub {
     owner = "asciimoo";
     repo = "hister";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-yX/MGhGyQxE5cSe1Q4T9EEBwRS5mxUBtpkn/RnGN4lU=";
+    hash = "sha256-4B7RkqhuuEfXYxvmkoU4yHVFw5M8KJsa3E30g0sYvx0=";
   };
 
   __structuredAttrs = true;
-  strictDeps = true;
 
-  vendorHash = "sha256-UR384CLSa44MqPVzzgzGZC/ROdG2iWtJ5L8AX/tfg0k=";
+  vendorHash = "sha256-RoViVw/r/BzAmq5qG3AGAX5LnuJUGdRQQ5ubFXElM04=";
   proxyVendor = true;
 
   nativeBuildInputs = [
@@ -65,7 +64,7 @@ buildGoModule (finalAttrs: {
 
       npmWorkspace = "webui/app";
       npmDepsFetcherVersion = 2;
-      npmDepsHash = "sha256-iCr+5HMxb4GLkkY2Ql6v+AXAb5U6Q/Yp+N83soJGbGI=";
+      npmDepsHash = "sha256-1agWFtnCag5gFRobWXg34itd6z2KSq4/ZauEJ7x9W7E=";
 
       # vite 8's rolldown pipeline does a dns.lookup('localhost') during `vite build`
       # which fails in darwin's relaxed sandbox without loopback access

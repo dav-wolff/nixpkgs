@@ -8,7 +8,7 @@
 
 python3Packages.buildPythonApplication (finalAttrs: {
   pname = "prowler";
-  version = "5.39.1";
+  version = "5.46.0";
   pyproject = true;
 
   __structuredAttrs = true;
@@ -17,7 +17,7 @@ python3Packages.buildPythonApplication (finalAttrs: {
     owner = "prowler-cloud";
     repo = "prowler";
     tag = finalAttrs.version;
-    hash = "sha256-iWjdcw5IY7xkow0E1AYTi/OgkS14CdVM9AOW86VPMak=";
+    hash = "sha256-kd4NGDo4Jbmn9BiYasQfgBxIMM1yQu4AdEtDTs62ePs=";
   };
 
   postPatch = ''
@@ -51,6 +51,7 @@ python3Packages.buildPythonApplication (finalAttrs: {
     azure-mgmt-apimanagement
     azure-mgmt-applicationinsights
     azure-mgmt-authorization
+    azure-mgmt-cognitiveservices
     azure-mgmt-compute
     azure-mgmt-containerregistry
     azure-mgmt-containerservice
@@ -95,6 +96,7 @@ python3Packages.buildPythonApplication (finalAttrs: {
     huaweicloudsdkkms
     huaweicloudsdkobs
     huaweicloudsdkrds
+    huaweicloudsdksmn
     huaweicloudsdkvpc
     huaweicloudsdkwaf
     jsonschema
@@ -122,9 +124,12 @@ python3Packages.buildPythonApplication (finalAttrs: {
     stackit-iaas
     stackit-objectstorage
     stackit-resourcemanager
+    stackit-ske
     tabulate
+    truststore
     tzlocal
     uuid6
+    zstandard
   ];
 
   postFixup = ''

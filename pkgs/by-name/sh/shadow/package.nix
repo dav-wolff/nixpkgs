@@ -33,13 +33,13 @@ in
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "shadow";
-  version = "4.20.2";
+  version = "4.20.3";
 
   src = fetchFromGitHub {
     owner = "shadow-maint";
     repo = "shadow";
     tag = finalAttrs.version;
-    hash = "sha256-uZQHIRjuXl1QQE5VCbdT6c+NEhFzb06WbjhH2wplU1E=";
+    hash = "sha256-BD0EWOhpFyNeb4WDcLQNmUYWcXthe4o7WV4sG8kJB7E=";
   };
 
   outputs = [
@@ -67,6 +67,8 @@ stdenv.mkDerivation (finalAttrs: {
   ++ lib.optional (pam != null && (lib.meta.availableOn stdenv.hostPlatform pam)) pam
   ++ lib.optional withLibbsd libbsd
   ++ lib.optional withTcb tcb;
+
+  strictDeps = true;
 
   patches = [
     # Don't set $PATH to /bin:/usr/bin but inherit the $PATH of the caller.
@@ -126,6 +128,8 @@ stdenv.mkDerivation (finalAttrs: {
   disallowedReferences = lib.optional (
     stdenv.buildPlatform != stdenv.hostPlatform
   ) stdenv.shellPackage;
+
+  __structuredAttrs = true;
 
   meta = {
     homepage = "https://github.com/shadow-maint/shadow";

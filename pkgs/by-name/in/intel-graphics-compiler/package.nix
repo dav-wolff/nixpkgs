@@ -109,6 +109,7 @@ stdenv.mkDerivation rec {
     export HOME=$(mktemp -d)
     git config --global user.email ""
     git config --global user.name nixbld
+    git config --global gc.auto 0
     git -C llvm-project init
     git -C llvm-project add .
     git -C llvm-project commit -m stub >/dev/null
@@ -157,6 +158,9 @@ stdenv.mkDerivation rec {
     changelog = "https://github.com/intel/intel-graphics-compiler/releases/tag/v${version}";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
-    maintainers = with lib.maintainers; [ SuperSandro2000 ];
+    maintainers = with lib.maintainers; [
+      SuperSandro2000
+      recutita
+    ];
   };
 }

@@ -10,7 +10,7 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "qownnotes-tui";
-  version = "0.6.0";
+  version = "1.3.2";
 
   __structuredAttrs = true;
 
@@ -18,12 +18,10 @@ rustPlatform.buildRustPackage (finalAttrs: {
     owner = "qownnotes";
     repo = "qownnotes-tui";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-TqqqXpUYWIkcQVMHxapCveASmMHYjCHchmYUEDZg7qY=";
+    hash = "sha256-XuVLBNtJVfr2XjbufgKnmGLjZSbPABKkZgMfjOcwAWM=";
   };
 
-  cargoHash = "sha256-fjSHZ2Xg1uv5Nl1oBBTE+5YsD749ITHUZG8grqrnNDU=";
-
-  strictDeps = true;
+  cargoHash = "sha256-vj5U24bH8BxGvgTpHjZMldTzQA/8ZqJQBbsaCbFVLuE=";
 
   nativeBuildInputs = [ installShellFiles ];
 

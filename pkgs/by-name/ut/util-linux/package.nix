@@ -3,8 +3,6 @@
   stdenv,
   fetchurl,
   pkg-config,
-  autoconf,
-  automake116x,
   zlib,
   shadow,
   capabilitiesSupport ? stdenv.hostPlatform.isLinux,
@@ -43,11 +41,11 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "util-linux" + lib.optionalString isMinimal "-minimal";
-  version = "2.42.2";
+  version = "2.42.4";
 
   src = fetchurl {
     url = "mirror://kernel/linux/utils/util-linux/v${lib.versions.majorMinor finalAttrs.version}/util-linux-${finalAttrs.version}.tar.xz";
-    hash = "sha256-A6BdOt+WAu8Sjy2gW4SzIFzmDDUeVzfANw90AAZ5zoo=";
+    hash = "sha256-+9YqEAq3u4dGugZhJVw8SBhbHpAhUHxiTaAfvGljMOw=";
   };
 
   # Note: fetchpatch/fetchpatch2 cause infinite recursion with util-linuxMinimal.
@@ -152,8 +150,6 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   nativeBuildInputs = [
-    autoconf
-    automake116x
     installShellFiles
     pkg-config
   ]
